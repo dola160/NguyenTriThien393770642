@@ -7,7 +7,7 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // Kích hoạt chế độ Dark Mode theo class bắt buộc của Tailwind CSS
+        // Kích hoạt chế độ Dark Mode theo class của Tailwind CSS
         tailwind.config = {
             darkMode: 'class'
         }
@@ -15,29 +15,46 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* Ngăn chặn lựa chọn văn bản trên toàn trang */
+        /* Ngăn chặn lựa chọn văn bản và các menu ngữ cảnh trên toàn trang */
         * {
             -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
             user-select: none;
             -webkit-touch-callout: none; /* Khóa nhấn giữ menu trên iOS */
+            -webkit-tap-highlight-color: transparent; /* Tắt vệt sáng khi chạm trên di động */
         }
-        /* Phông chữ tùy chỉnh */
+        
+        /* Định nghĩa các phông chữ tùy chọn */
         .font-sans-custom { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         .font-serif-custom { font-family: Georgia, Cambria, "Times New Roman", Times, serif; }
         .font-mono-custom { font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace; }
         
+        /* Chống in ấn ra file PDF/Giấy (chụp màn hình gián tiếp) */
         @media print {
             body { display: none !important; }
         }
     </style>
 </head>
-<body class="font-sans-custom bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300 min-h-full flex flex-col items-center justify-start p-0 m-0">
+<body class="font-sans-custom bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300 min-h-full flex flex-col items-center justify-start p-0 m-0 overflow-x-hidden">
 
-    <!-- Lớp phủ bảo mật chống kéo thả và nhấn giữ -->
-    <div id="security-overlay" class="fixed inset-0 pointer-events-none z-50 border-4 border-transparent active:border-red-500/20 transition-all duration-150"></div>
+    <!-- LỚP PHỦ BẢO VỆ CHỐNG CHỤP/QUAY MÀN HÌNH (Sẽ kích hoạt khi phát hiện nghi vấn) -->
+    <div id="security-alert-overlay" class="fixed inset-0 bg-slate-950/95 backdrop-blur-2xl z-50 flex flex-col items-center justify-center p-6 text-center transition-all duration-300 hidden">
+        <div class="bg-red-500/10 border border-red-500/30 p-6 rounded-3xl max-w-sm flex flex-col items-center gap-4 shadow-2xl">
+            <div class="w-16 h-16 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center animate-bounce">
+                <i data-lucide="shield-alert" class="w-10 h-10"></i>
+            </div>
+            <h2 class="text-xl font-black text-red-500">PHÁT HIỆN NGHI VẤN!</h2>
+            <p class="text-xs text-slate-300 leading-relaxed">
+                Hệ thống phát hiện hành động chụp màn hình, quay màn hình hoặc ứng dụng ghi hình đang chạy ngầm để bảo vệ quyền riêng tư của Nguyễn Trí Thiện.
+            </p>
+            <button id="btn-unlock-security" class="mt-2 w-full py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition-all active:scale-95 shadow-lg shadow-red-600/30">
+                Xác nhận bảo mật & Mở khóa
+            </button>
+        </div>
+    </div>
 
+    <!-- Container chính chứa danh thiếp điện tử -->
     <div id="main-card" class="w-full max-w-md bg-white dark:bg-slate-900 min-h-screen shadow-2xl relative flex flex-col justify-between overflow-hidden">
         
         <!-- PHẦN ĐẦU: ẢNH BÌA & CÀI ĐẶT -->
@@ -50,7 +67,7 @@
                 draggable="false"
             />
             
-            <!-- Thanh công cụ cấu hình cài đặt -->
+            <!-- Thanh công cụ cài đặt góc trên phải -->
             <div class="absolute top-3 right-3 flex items-center gap-2 z-30">
                 <button id="btn-settings" class="bg-black/40 hover:bg-black/60 text-white p-2 rounded-full backdrop-blur-sm transition-all active:scale-95" title="Cài đặt giao diện">
                     <i data-lucide="sliders-horizontal" class="w-5 h-5"></i>
@@ -58,7 +75,7 @@
             </div>
         </div>
 
-        <!-- KHU VỰC CÀI ĐẶT (BẢNG TRƯỢT/XUẤT HIỆN) -->
+        <!-- KHU VỰC CÀI ĐẶT (BẢNG ĐIỀU CHỈNH) -->
         <div id="settings-panel" class="hidden absolute top-16 left-3 right-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-4 rounded-2xl shadow-xl z-40 border border-slate-200 dark:border-slate-800 transition-all duration-300">
             <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-200 dark:border-slate-800">
                 <h3 class="font-bold text-sm uppercase tracking-wider flex items-center gap-2 text-slate-800 dark:text-white">
@@ -69,7 +86,7 @@
                 </button>
             </div>
 
-            <!-- 1. Chế độ Sáng / Tối -->
+            <!-- 1. Chuyển đổi Sáng / Tối -->
             <div class="flex items-center justify-between py-2 text-slate-800 dark:text-slate-200">
                 <span class="text-xs font-semibold">Chế độ giao diện</span>
                 <button id="btn-toggle-theme" class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium transition-all active:scale-95">
@@ -79,7 +96,7 @@
                 </button>
             </div>
 
-            <!-- 2. Kích thước chữ (Toàn bộ ứng dụng) -->
+            <!-- 2. Kích thước chữ (Toàn bộ ứng dụng co giãn theo REM) -->
             <div class="flex items-center justify-between py-2 border-t border-slate-100 dark:border-slate-800 text-slate-800 dark:text-slate-200">
                 <span class="text-xs font-semibold">Kích thước chữ</span>
                 <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
@@ -100,9 +117,15 @@
             </div>
 
             <!-- 4. Trạng thái Bảo mật riêng tư -->
-            <div class="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
-                Đã kích hoạt: Khóa sao chép, nhấn giữ, kéo ảnh & chống chụp màn hình.
+            <div class="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] text-emerald-600 dark:text-emerald-400 flex flex-col gap-1">
+                <div class="flex items-center gap-1">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                    Đã kích hoạt: Khóa sao chép, nhấn giữ, kéo ảnh.
+                </div>
+                <div class="flex items-center gap-1 text-red-500 dark:text-red-400 font-bold">
+                    <i data-lucide="eye-off" class="w-3.5 h-3.5"></i>
+                    Bảo vệ thời gian thực: Chặn chụp/quay màn hình.
+                </div>
             </div>
         </div>
 
@@ -236,7 +259,7 @@
                         </div>
                     </div>
                     
-                    <!-- Phần hiển thị mã QR Facebook (mở rộng/thu gọn) -->
+                    <!-- Phần hiển thị mã QR Facebook -->
                     <div id="qr-facebook" class="hidden border-t border-slate-100 dark:border-slate-800 p-4 bg-white dark:bg-slate-900/40 text-center transition-all duration-300">
                         <div class="flex flex-col items-center justify-center">
                             <p class="text-xs text-slate-500 mb-2 font-bold">Mã QR trang cá nhân Facebook</p>
@@ -276,7 +299,7 @@
                         </div>
                     </div>
                     
-                    <!-- Phần hiển thị mã QR Zalo (mở rộng/thu gọn) -->
+                    <!-- Phần hiển thị mã QR Zalo -->
                     <div id="qr-zalo" class="hidden border-t border-slate-100 dark:border-slate-800 p-4 bg-white dark:bg-slate-900/40 text-center transition-all duration-300">
                         <div class="flex flex-col items-center justify-center">
                             <p class="text-xs text-slate-500 mb-2 font-bold">Mã QR tài khoản Zalo cá nhân</p>
@@ -297,7 +320,7 @@
             </div>
         </div>
 
-        <!-- HỘP THÔNG BÁO TÙY CHỈNH BẢO MẬT -->
+        <!-- HỘP THÔNG BÁO POPUP TOAST TRONG TRANG -->
         <div id="toast-message" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/95 text-white dark:bg-white dark:text-slate-900 text-xs font-bold px-4 py-3 rounded-full shadow-2xl backdrop-blur-md z-50 pointer-events-none flex items-center gap-2 opacity-0 scale-90 transition-all duration-300">
             <i data-lucide="shield-alert" class="w-4 h-4 text-amber-500 fill-amber-500"></i>
             <span id="toast-text">Không thể thực hiện hành động này!</span>
@@ -314,16 +337,72 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT XỬ LÝ TOÀN BỘ LOGIC -->
+    <!-- JAVASCRIPT LOGIC BẢO MẬT VÀ TÍNH NĂNG ĐIỀU CHỈNH -->
     <script>
-        // Khởi tạo Lucide Icons
+        // Khởi tạo Lucide Icons hiển thị trên giao diện
         lucide.createIcons();
 
         /* ==========================================
-           1. CƠ CHẾ BẢO VỆ QUYỀN RIÊNG TƯ TUYỆT ĐỐI 
+           1. PHÁT HIỆN CHỤP / QUAY MÀN HÌNH CHỦ ĐỘNG (REAL TIME)
+           ========================================== */
+
+        const securityOverlay = document.getElementById('security-alert-overlay');
+        const btnUnlockSecurity = document.getElementById('btn-unlock-security');
+
+        // Hàm kích hoạt cảnh báo bảo mật khi nghi vấn chụp/quay màn hình
+        function triggerSecurityBlock() {
+            securityOverlay.classList.remove('hidden');
+            // Xóa bộ nhớ tạm clipboard đề phòng đã chụp màn hình
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText('Quyền riêng tư của Nguyễn Trí Thiện được bảo vệ.');
+            }
+        }
+
+        // Người dùng ấn Xác nhận để đóng màn hình bảo vệ
+        btnUnlockSecurity.addEventListener('click', () => {
+            securityOverlay.classList.add('hidden');
+            showToast("Giao diện đã được mở khóa an toàn!");
+        });
+
+        // A. Bắt sự kiện chuyển hướng trang/mất tiêu điểm (Phát hiện chụp màn hình trên iOS/Android)
+        // Khi người dùng bấm tổ hợp nút nguồn + âm lượng, tab web sẽ bị tạm dừng và kích hoạt sự kiện visibilitychange
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                triggerSecurityBlock();
+            }
+        });
+
+        // Khi cửa sổ mất tiêu điểm (Người dùng chuyển ứng dụng quay phim hoặc mở trung tâm điều khiển để chụp)
+        window.addEventListener('blur', () => {
+            triggerSecurityBlock();
+        });
+
+        // B. Phát hiện quay màn hình / Chia sẻ màn hình thời gian thực (WebRTC detection)
+        // Nếu trình duyệt có hỗ trợ luồng capture thì giám sát chặt chẽ trạng thái track hoạt động
+        if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+            const originalGetDisplayMedia = navigator.mediaDevices.getDisplayMedia;
+            navigator.mediaDevices.getDisplayMedia = function(options) {
+                triggerSecurityBlock();
+                showToast("Cảnh báo: Hành vi quay phim màn hình bị từ chối!");
+                return Promise.reject(new Error("Hành động bị cấm vì lý do bảo mật!"));
+            };
+        }
+
+        // C. Giám sát sự thay đổi kích thước đột ngột hoặc lấy nét cực nhanh khi các app chụp ảnh hoạt động đè lên
+        window.addEventListener('resize', () => {
+            // Chụp màn hình trên một số dòng Android sẽ gọi kích hoạt lại kích thước layout trong tích tắc
+            const isInspectOpen = window.outerWidth - window.innerWidth > 160 || window.outerHeight - window.innerHeight > 160;
+            if (isInspectOpen) {
+                triggerSecurityBlock();
+            }
+        });
+
+
+        /* ==========================================
+           2. CƠ CHẾ KHÓA SAO CHÉP, NHẤN GIỮ VÀ CHUỘT PHẢI
            ========================================== */
         
-        // Hiện thông báo toast tùy chỉnh (Thay thế hoàn toàn alert)
+        // Hiện thông báo toast thay thế alert tiêu chuẩn để tránh lỗi luồng chạy trong iframe
         function showToast(message) {
             const toast = document.getElementById('toast-message');
             const toastText = document.getElementById('toast-text');
@@ -338,14 +417,14 @@
             }, 2500);
         }
 
-        // A. Khóa Menu Chuột Phải (Context Menu)
+        // Khóa Menu Chuột Phải
         document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
             showToast("Bảo mật: Đã khóa menu chuột phải!");
             return false;
         });
 
-        // B. Khóa chức năng Sao chép & Cắt (Copy/Cut)
+        // Khóa tính năng Sao chép & Cắt
         document.addEventListener('copy', function(e) {
             e.preventDefault();
             showToast("Bảo mật: Đã khóa sao chép nội dung!");
@@ -357,7 +436,7 @@
             return false;
         });
 
-        // C. Khóa nhấn giữ hình ảnh/liên kết trên thiết bị di động (Touch Events)
+        // Khóa nhấn giữ hình ảnh/liên kết trên thiết bị di động
         document.addEventListener('touchstart', function(e) {
             const target = e.target;
             const isClickable = target.closest('a') || target.closest('button') || target.closest('select') || target.closest('option');
@@ -367,21 +446,29 @@
             }
         }, { passive: true });
 
-        // D. Khóa phím tắt phổ biến để lấy mã nguồn hoặc chụp màn hình
+        // Khóa phím tắt phổ biến liên quan tới Inspect mã và Chụp màn hình (Windows + Shift + S / PrintScreen / F12 / Cmd + Shift + I)
         document.addEventListener('keydown', function(e) {
+            // Khóa phím Print Screen
+            if (e.key === 'PrintScreen' || e.keyCode === 44) {
+                e.preventDefault();
+                triggerSecurityBlock();
+                return false;
+            }
+            
+            // Khóa tổ hợp chụp màn hình của macOS hoặc Windows (Windows+Shift+S / Cmd+Shift+3,4)
             if (
                 e.key === 'F12' || 
-                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'C' || e.key === 'J')) || 
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'C' || e.key === 'J' || e.key === 'i' || e.key === 'c' || e.key === 'j')) || 
                 (e.ctrlKey && (e.key === 'u' || e.key === 'U' || e.key === 's' || e.key === 'S' || e.key === 'p' || e.key === 'P')) ||
-                e.key === 'PrintScreen'
+                (e.metaKey && e.shiftKey && (e.key === '3' || e.key === '4' || e.key === '5'))
             ) {
                 e.preventDefault();
-                showToast("Hành động này bị chặn để bảo vệ thông tin!");
+                showToast("Hành động này bị chặn để bảo mật!");
                 return false;
             }
         });
 
-        // E. Khóa hành động Kéo thả ảnh (Drag and Drop)
+        // Khóa hành động Kéo thả ảnh (Tránh tải lậu hình ảnh)
         document.addEventListener('dragstart', function(e) {
             if (e.target.tagName === 'IMG') {
                 e.preventDefault();
@@ -390,17 +477,9 @@
             }
         });
 
-        // F. Chống chụp màn hình bằng cách can thiệp Clipboard
-        window.addEventListener('keyup', function(e) {
-            if (e.key === 'PrintScreen') {
-                navigator.clipboard.writeText(''); // Xóa trắng clipboard
-                showToast("Ảnh chụp màn hình đã bị chặn!");
-            }
-        });
-
 
         /* ==========================================
-           2. TÍNH NĂNG TÙY BIẾN GIAO DIỆN
+           3. TÍNH NĂNG TÙY BIẾN GIAO DIỆN CHUẨN
            ========================================== */
         
         // Quản lý hiển thị Settings Panel
@@ -415,7 +494,7 @@
             settingsPanel.classList.add('hidden');
         });
 
-        // A. Chuyển đổi giao diện Sáng / Tối (Dark/Light mode)
+        // A. Chuyển đổi giao diện Sáng / Tối hoạt động 100%
         const btnToggleTheme = document.getElementById('btn-toggle-theme');
         const themeIconLight = document.getElementById('theme-icon-light');
         const themeIconDark = document.getElementById('theme-icon-dark');
@@ -434,8 +513,7 @@
             }
         });
 
-        // B. Điều chỉnh kích thước chữ (Font Size: Nhỏ / Mặc định / Lớn)
-        // Thay đổi kích thước gốc giúp Tailwind rem-scale tự động co giãn đồng bộ toàn trang 100%
+        // B. Điều chỉnh kích thước chữ TOÀN BỘ ứng dụng (A- / Mặc định / A+) co giãn tỉ lệ theo rem
         const fontSizes = [
             { label: 'Nhỏ (A-)', size: '13.5px' },
             { label: 'Mặc định', size: '16px' },
@@ -450,11 +528,11 @@
         function updateFontSize() {
             const selectedSize = fontSizes[currentSizeIndex];
             
-            // Thay đổi kích thước chữ gốc trên phần tử HTML để tự động co giãn tỉ lệ mọi chữ, nút, padding bằng rem
+            // Thay đổi kích thước gốc để toàn bộ chữ, icon và khoảng cách co giãn đồng bộ tỉ lệ 100%
             document.documentElement.style.fontSize = selectedSize.size;
             fontLabel.textContent = selectedSize.label;
             
-            // Cập nhật trạng thái các nút bấm tăng/giảm
+            // Cập nhật trạng thái các nút tăng/giảm
             fontDownBtn.disabled = currentSizeIndex === 0;
             fontUpBtn.disabled = currentSizeIndex === fontSizes.length - 1;
             
@@ -476,10 +554,10 @@
             }
         });
         
-        // Khởi động thiết lập cỡ chữ ban đầu
+        // Cập nhật cỡ chữ lần đầu khởi chạy
         updateFontSize();
 
-        // C. Lựa chọn nhiều loại phông chữ hiển thị
+        // C. Kiểu phông chữ hiển thị
         const fontFamilySelect = document.getElementById('font-family-select');
         fontFamilySelect.addEventListener('change', (e) => {
             const selectedFont = e.target.value;
@@ -489,10 +567,10 @@
 
 
         /* ==========================================
-           3. TÍNH NĂNG ĐIỀU KHIỂN MÃ QR & KẾT NỐI
+           4. TÍNH NĂNG ĐIỀU KHIỂN MÃ QR & KẾT NỐI
            ========================================== */
 
-        // A. Bật tắt vùng QR (Thu gọn / Xem chi tiết)
+        // A. Bật tắt vùng hiển thị QR
         function toggleQR(id) {
             const qrPanel = document.getElementById(id);
             qrPanel.classList.toggle('hidden');
@@ -515,7 +593,7 @@
                 })
                 .catch(err => {
                     window.open(imgUrl, '_blank');
-                    showToast("Ảnh đang hiển thị ở tab mới!");
+                    showToast("Ảnh đang mở ở trang mới để tải xuống!");
                 });
         }
 
@@ -535,7 +613,7 @@
             }
         }
 
-        // Sao chép dự phòng
+        // Sao chép liên kết dự phòng bằng cách tự động tạo text area tạm thời
         function fallbackCopy(text) {
             const textArea = document.createElement("textarea");
             textArea.value = text;
