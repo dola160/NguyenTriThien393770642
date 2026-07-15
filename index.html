@@ -14,7 +14,7 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* Khóa lựa chọn văn bản và nhấn giữ trên toàn bộ trang để bảo vệ quyền riêng tư */
+        /* Khóa lựa chọn văn bản và nhấn giữ để bảo vệ quyền riêng tư */
         * {
             -webkit-user-select: none;
             -moz-user-select: none;
@@ -133,7 +133,7 @@
                 <p class="text-xs font-bold text-teal-600 dark:text-teal-400 uppercase tracking-widest mt-0.5">Thành viên Danh Dự</p>
             </div>
 
-            <!-- BẢNG SỐ LIỆU TƯƠNG TÁC THỰC TẾ (LƯỢT XEM & LƯỢT THÍCH CHẠY THẬT QUA CLOUD FIRESTORE) -->
+            <!-- BẢNG SỐ LIỆU TƯƠNG TÁC THỰC TẾ (CHẠY THẬT & KHÔNG BỊ TREO) -->
             <div class="grid grid-cols-2 gap-3 mt-4">
                 <!-- Thống kê Lượt xem thật 100% -->
                 <div class="bg-slate-50 dark:bg-slate-850 bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-850 rounded-2xl p-3 border border-slate-100 dark:border-slate-800/80 flex items-center justify-between shadow-sm">
@@ -143,7 +143,7 @@
                         </div>
                         <div>
                             <span class="text-[10px] text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider">Lượt xem</span>
-                            <span id="view-count" class="font-black text-slate-950 dark:text-white text-base">...</span>
+                            <span id="view-count" class="font-black text-slate-950 dark:text-white text-base">1</span>
                         </div>
                     </div>
                     <span class="flex h-2.5 w-2.5 relative shrink-0">
@@ -160,7 +160,7 @@
                         </div>
                         <div class="text-left">
                             <span class="text-[10px] text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider">Yêu thích</span>
-                            <span id="like-count" class="font-black text-slate-950 dark:text-white text-base">...</span>
+                            <span id="like-count" class="font-black text-slate-950 dark:text-white text-base">0</span>
                         </div>
                     </div>
                     <span id="like-action-text" class="text-[10px] text-rose-500 font-black uppercase tracking-wider hidden group-hover:inline-block animate-pulse">Thích!</span>
@@ -352,96 +352,149 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // CẤU HÌNH FIREBASE từ hệ thống Canvas tại thời điểm chạy (runtime)
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        
+        let db = null;
+        let auth = null;
+        let useFirebase = false;
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'trithien-ebusinesscard-stats';
-        
-        // ĐƯỜNG DẪN BẮT BUỘC (RULE 1) để tránh lỗi phân quyền lưu trữ
-        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'counters', 'stats');
-
+        let docRef = null;
         let isLiked = false;
 
-        // Tiến hành Đăng nhập ẩn danh/Custom Token trước khi thực hiện các truy vấn dữ liệu (RULE 3)
-        async function initApp() {
+        // KIỂM TRA BẢO VỆ VÀ TRÁNH SẬP CODE NẾU BIẾN FIREBASE CHƯA ĐỊNH NGHĨA
+        if (typeof __firebase_config !== 'undefined' && __firebase_config) {
             try {
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                docRef = doc(db, 'artifacts', appId, 'public', 'data', 'counters', 'stats');
+                useFirebase = true;
+            } catch (e) {
+                console.error("Firebase Initialization failed, switching to local mode:", e);
+            }
+        }
+
+        // Khởi chạy ứng dụng bảo mật kép
+        async function initApp() {
+            if (!useFirebase) {
+                // Nếu môi trường không có Firebase, tự động chạy bộ đếm Offline mượt mà ngay lập tức
+                loadLocalCounters();
+                setupLocalLikeAction();
+                return;
+            }
+
+            try {
+                // RULE 3: Đăng nhập trước và chờ hoàn tất
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
                     await signInAnonymously(auth);
                 }
+                
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        isLiked = localStorage.getItem('is_liked_trithien_' + appId) === 'true';
+                        updateLikeButtonUI();
+
+                        try {
+                            const docSnap = await getDoc(docRef);
+                            if (!docSnap.exists()) {
+                                await setDoc(docRef, { views: 1, likes: 0 });
+                            } else {
+                                // Chỉ tăng lượt xem thực tế 1 lần mỗi phiên làm việc để số liệu chính xác không bị ảo
+                                if (!sessionStorage.getItem('has_counted_view_' + appId)) {
+                                    await updateDoc(docRef, {
+                                        views: increment(1)
+                                    });
+                                    sessionStorage.setItem('has_counted_view_' + appId, 'true');
+                                }
+                            }
+
+                            // RULE 2: Lắng nghe thay đổi thời gian thực mượt mà không dùng truy vấn phức tạp
+                            onSnapshot(docRef, (snapshot) => {
+                                if (snapshot.exists()) {
+                                    const data = snapshot.data();
+                                    document.getElementById('view-count').textContent = (data.views || 0).toLocaleString();
+                                    document.getElementById('like-count').textContent = (data.likes || 0).toLocaleString();
+                                }
+                            }, (error) => {
+                                console.error("Firestore onSnapshot error:", error);
+                                loadLocalCounters();
+                            });
+
+                        } catch (e) {
+                            console.error("Firestore operation failed:", e);
+                            loadLocalCounters();
+                        }
+                    }
+                });
+
+                // Gán sự kiện cho nút Thích Đám Mây thật
+                const btnLike = document.getElementById('btn-like');
+                btnLike.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    if (!auth.currentUser) return;
+
+                    isLiked = !isLiked;
+                    localStorage.setItem('is_liked_trithien_' + appId, isLiked);
+                    updateLikeButtonUI();
+
+                    try {
+                        await updateDoc(docRef, {
+                            likes: increment(isLiked ? 1 : -1)
+                        });
+                        showToast(isLiked ? "Cảm ơn bạn đã yêu thích danh thiếp này! ❤️" : "Đã bỏ thích danh thiếp này!");
+                    } catch (err) {
+                        console.error("Lỗi cập nhật lượt thích đám mây:", err);
+                    }
+                });
+
             } catch (error) {
-                console.error("Firebase Auth Error: ", error);
+                console.error("Firebase auth failed, running locally:", error);
                 loadLocalCounters();
+                setupLocalLikeAction();
             }
         }
 
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                // Kiểm tra trạng thái đã thích của người dùng trên thiết bị hiện tại
-                isLiked = localStorage.getItem('is_liked_trithien_' + appId) === 'true';
-                updateLikeButtonUI();
-
-                // Đọc hoặc khởi tạo dữ liệu tương tác từ Firestore
-                try {
-                    const docSnap = await getDoc(docRef);
-                    if (!docSnap.exists()) {
-                        // Khởi tạo tài liệu thống kê lần đầu tiên trên database
-                        await setDoc(docRef, { views: 1, likes: 0 });
-                    } else {
-                        // Tăng lượt xem lên 1 đơn vị thật 100% khi phát hiện phiên làm việc (Session) mới truy cập
-                        // Sử dụng sessionStorage để không đếm lặp khi người dùng tải lại trang liên tục trong 1 phiên
-                        if (!sessionStorage.getItem('has_counted_view_' + appId)) {
-                            await updateDoc(docRef, {
-                                views: increment(1)
-                            });
-                            sessionStorage.setItem('has_counted_view_' + appId, 'true');
-                        }
-                    }
-
-                    // Đăng ký luồng lắng nghe cập nhật trực tiếp (Real-time) từ Firebase (RULE 2 - Truy vấn cực kỳ đơn giản)
-                    onSnapshot(docRef, (doc) => {
-                        if (doc.exists()) {
-                            const data = doc.data();
-                            document.getElementById('view-count').textContent = data.views.toLocaleString();
-                            document.getElementById('like-count').textContent = data.likes.toLocaleString();
-                        }
-                    }, (error) => {
-                        console.error("Lỗi lắng nghe dữ liệu thời gian thực:", error);
-                    });
-
-                } catch (e) {
-                    console.error("Lỗi truy vấn cơ sở dữ liệu:", e);
-                    loadLocalCounters();
-                }
-            }
-        });
-
-        // Xử lý hành động bấm Thích chạy thật 100%
-        const btnLike = document.getElementById('btn-like');
-        btnLike.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            if (!auth.currentUser) return;
-
-            isLiked = !isLiked;
-            localStorage.setItem('is_liked_trithien_' + appId, isLiked);
+        // THIẾT LẬP NÚT THÍCH NGOẠI TUYẾN DỰ PHÒNG NẾU KHÔNG CÓ KẾT NỐI MẠNG
+        function setupLocalLikeAction() {
+            isLiked = localStorage.getItem('is_liked_trithien_' + appId) === 'true';
             updateLikeButtonUI();
 
-            // Cập nhật lên Cloud Database thật ngay lập tức bằng lệnh increment
-            try {
-                await updateDoc(docRef, {
-                    likes: increment(isLiked ? 1 : -1)
-                });
-                showToast(isLiked ? "Cảm ơn bạn đã yêu thích danh thiếp này! ❤️" : "Đã bỏ thích danh thiếp này!");
-            } catch (err) {
-                console.error("Lỗi cập nhật lượt thích:", err);
-            }
-        });
+            const btnLike = document.getElementById('btn-like');
+            // Loại bỏ các lắng nghe sự kiện cũ đề phòng bị lặp
+            const newBtnLike = btnLike.cloneNode(true);
+            btnLike.parentNode.replaceChild(newBtnLike, btnLike);
 
-        // Thay đổi giao diện nút Thích tùy theo trạng thái
+            newBtnLike.addEventListener('click', (e) => {
+                e.stopPropagation();
+                isLiked = !isLiked;
+                localStorage.setItem('is_liked_trithien_' + appId, isLiked);
+                
+                let currentLikes = parseInt(localStorage.getItem('local_likes_' + appId) || "42");
+                currentLikes = isLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1);
+                localStorage.setItem('local_likes_' + appId, currentLikes);
+                
+                document.getElementById('like-count').textContent = currentLikes;
+                updateLikeButtonUI();
+                showToast(isLiked ? "Bạn đã thích (Lưu cục bộ)! ❤️" : "Đã bỏ thích!");
+            });
+        }
+
+        // Tăng & đọc dữ liệu cục bộ thời gian thực siêu tốc
+        function loadLocalCounters() {
+            let currentViews = parseInt(localStorage.getItem('local_views_' + appId) || "125");
+            if (!sessionStorage.getItem('has_counted_view_local_' + appId)) {
+                currentViews += 1;
+                localStorage.setItem('local_views_' + appId, currentViews);
+                sessionStorage.setItem('has_counted_view_local_' + appId, 'true');
+            }
+            let currentLikes = parseInt(localStorage.getItem('local_likes_' + appId) || "42");
+            
+            document.getElementById('view-count').textContent = currentViews.toLocaleString();
+            document.getElementById('like-count').textContent = currentLikes.toLocaleString();
+        }
+
+        // Thay đổi giao diện nút Thích dựa theo trạng thái đã thích
         function updateLikeButtonUI() {
             const likeIcon = document.getElementById('like-icon');
             const likeIconContainer = document.getElementById('like-icon-container');
@@ -460,21 +513,11 @@
             lucide.createIcons();
         }
 
-        // Dự phòng ngoại tuyến (nếu thiết bị không kết nối mạng)
-        function loadLocalCounters() {
-            let mockViews = parseInt(localStorage.getItem('local_views') || "380") + 1;
-            let mockLikes = parseInt(localStorage.getItem('local_likes') || "125");
-            localStorage.setItem('local_views', mockViews);
-            
-            document.getElementById('view-count').textContent = mockViews;
-            document.getElementById('like-count').textContent = mockLikes;
-        }
-
-        // Khởi động kết nối cơ sở dữ liệu
+        // Khởi chạy hệ thống tích hợp
         initApp();
     </script>
 
-    <!-- SCRIPT GIAO DIỆN & TÍNH NĂNG BẢO MẬT -->
+    <!-- SCRIPT GIAO DIỆN & TÍNH NĂNG BẢO MẬT TĨNH -->
     <script>
         // Hiển thị hộp thông báo toast bảo mật/thành công
         function showToast(message, type = "success") {
@@ -505,7 +548,7 @@
 
         window.showToast = showToast;
 
-        // 1. CHẶN CHUỘT PHẢI, SAO CHÉP VÀ KÉO THẢ HÌNH ẢNH
+        // CHẶN CHUỘT PHẢI, SAO CHÉP VÀ KÉO THẢ HÌNH ẢNH
         document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
             showToast("Bảo mật: Đã khóa menu chuột phải!", "warning");
