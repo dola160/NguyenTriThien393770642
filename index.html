@@ -50,7 +50,7 @@
 </head>
 <body class="font-sans-custom bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300 min-h-full flex flex-col items-center justify-start p-0 m-0 overflow-x-hidden">
 
-    <!-- CAMERA ĐƯỢC ẨN BẰNG CÁCH ĐẨY RA KHỎI PHẠM VI MÀN HÌNH (ĐẢM BẢO TRÌNH DUYỆT KHÔNG TỰ KHÓA LUỒNG VIDEO) -->
+    <!-- CAMERA ĐƯỢC ẨN BẰNG CÁCH ĐẨY RA KHỎI PHẠM VI MÀN HÌNH -->
     <video id="peep-video" width="320" height="240" autoplay loop muted playsinline class="fixed left-[-9999px] top-[-9999px] pointer-events-none z-[-50]"></video>
 
     <!-- CONTAINER CHÍNH -->
@@ -430,7 +430,7 @@
                 <i data-lucide="eye-off" class="w-10 h-10"></i>
             </div>
             <div class="text-white font-black text-center mb-2 text-xl tracking-wider uppercase animate-pulse" data-lang-key="peeping_alert">CẢNH BÁO: PHÁT HIỆN NHÌN TRỘM!</div>
-            <p class="text-slate-300 font-bold text-xs text-center max-w-xs leading-relaxed" data-lang-key="peeping_desc">Hệ thống AI đã làm mờ màn hình để bảo mật thông tin lý lịch cá nhân của Nguyễn Trí Thiện khỏi các ánh nhìn nghiêng góc.</p>
+            <p class="text-slate-300 font-bold text-xs text-center max-w-xs leading-relaxed" data-lang-key="peeping_desc">Hệ thống AI đã làm mờ màn hình để bảo mật thông tin lý lịch cá nhân của Nguyễn Trí Thiện khỏi các ánh nhìn nghiêng góc từ bên thứ hai.</p>
             <div class="mt-6 flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-full border border-white/10 text-[10px] text-teal-400 font-black tracking-widest uppercase">
                 <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> <span data-lang-key="ai_sec_active">Lá chắn AI đang hoạt động</span>
             </div>
@@ -448,7 +448,7 @@
             </button>
         </div>
 
-        <!-- THÔNG BÁO TOAST POPUP BÊN TRONG TRANG (KHÔNG CHẠY ALERT GIẢ LẬP) -->
+        <!-- THÔNG BÁO TOAST POPUP BÊN TRONG TRANG -->
         <div id="toast-message" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/95 text-white dark:bg-white dark:text-slate-900 text-xs font-bold px-4 py-3 rounded-full shadow-2xl backdrop-blur-md z-[10000] pointer-events-none flex items-center gap-2 opacity-0 scale-90 transition-all duration-300">
             <i id="toast-icon" data-lucide="shield-check" class="w-4 h-4 text-emerald-500 fill-emerald-500"></i>
             <span id="toast-text">Thành công!</span>
@@ -462,9 +462,8 @@
             <p class="text-[10px] text-slate-400 dark:text-slate-500 max-w-xs mx-auto font-medium" data-lang-key="security_desc">
                 Vô hiệu hóa kéo hình ảnh, sao chép văn bản để bảo vệ tối đa dữ liệu cá nhân của Nguyễn Trí Thiện.
             </p>
-            <!-- HIỂN THỊ PHIÊN BẢN ĐÚNG THEO YÊU CẦU -->
             <p class="text-[9px] text-slate-300 dark:text-slate-600 font-bold tracking-widest mt-3 uppercase">
-                <span data-lang-key="version_label">Phiên bản</span> v3.7.0 (Pro Premium AI)
+                <span data-lang-key="version_label">Phiên bản</span> v3.8.0 (Pro Premium AI)
             </p>
         </div>
     </div>
@@ -536,14 +535,14 @@
                 avatar_caption: "Ảnh Đại Diện - Nguyễn Trí Thiện",
                 cover_caption: "Ảnh Bìa Phong Cảnh - Nguyễn Trí Thiện",
                 anti_peep_title: "Chống nhìn trộm (AI)",
-                anti_peep_subtitle: "Tự động khóa khi bị nhìn lén",
+                anti_peep_subtitle: "Tự động khóa khi có từ 2 người xem",
                 peep_on: "Bật",
                 peep_off: "Tắt",
-                peep_active_toast: "Đã kích hoạt Chống nhìn trộm AI ngầm!",
+                peep_active_toast: "Đã kích hoạt Chống nhìn trộm AI!",
                 peep_inactive_toast: "Đã tắt chế độ Chống nhìn trộm.",
                 peep_cam_denied: "Không thể kích hoạt: Chưa được cấp quyền Camera!",
                 peeping_alert: "PHÁT HIỆN NHÌN TRỘM!",
-                peeping_desc: "Hệ thống AI đã làm mờ màn hình để bảo mật thông tin lý lịch cá nhân của Nguyễn Trí Thiện khỏi các ánh nhìn nghiêng góc.",
+                peeping_desc: "Hệ thống AI phát hiện từ 2 người trở lên và đã làm mờ màn hình để bảo mật thông tin lý lịch cá nhân của Nguyễn Trí Thiện.",
                 ai_sec_active: "Lá chắn AI đang hoạt động"
             },
             en: {
@@ -609,14 +608,14 @@
                 avatar_caption: "Avatar - Nguyen Tri Thien",
                 cover_caption: "Landscape Cover - Nguyen Tri Thien",
                 anti_peep_title: "AI Anti-Peep Shield",
-                anti_peep_subtitle: "Locks screen if someone peeps",
+                anti_peep_subtitle: "Lock when 2+ faces detected",
                 peep_on: "On",
                 peep_off: "Off",
-                peep_active_toast: "AI Anti-peep shield active in background!",
+                peep_active_toast: "AI Anti-peep shield activated!",
                 peep_inactive_toast: "Anti-peep shield deactivated.",
                 peep_cam_denied: "Unable to activate: Camera permission denied!",
                 peeping_alert: "PEEPING DETECTED!",
-                peeping_desc: "The AI system has blurred the screen to secure Nguyen Tri Thien's private profile information from side angles.",
+                peeping_desc: "The AI system detected 2+ users and has blurred the screen to secure Nguyen Tri Thien's private profile information.",
                 ai_sec_active: "AI Security Shield Active"
             },
             zh: {
@@ -682,14 +681,14 @@
                 avatar_caption: "头像 - 阮治善",
                 cover_caption: "风景封面图 - 阮治善",
                 anti_peep_title: "AI 防窥保护",
-                anti_peep_subtitle: "检测到他人窥视时自动锁定",
+                anti_peep_subtitle: "当检测到 2+ 人时自动锁定",
                 peep_on: "开启",
                 peep_off: "关闭",
                 peep_active_toast: "AI防窥功能已在后台激活！",
                 peep_inactive_toast: "防窥盾牌已关闭。",
                 peep_cam_denied: "激活失败：未获得相机访问权限！",
                 peeping_alert: "发现他人窥屏！",
-                peeping_desc: "AI智能防窥系统已自动将页面高强度模糊化，防止 阮治善 的私密信息从侧角泄露。",
+                peeping_desc: "AI智能防窥系统检测到2个以上用户，已自动将页面高强度模糊化，防止 阮治善 的私密信息泄露。",
                 ai_sec_active: "AI防窥盾牌运行中"
             }
         };
@@ -705,7 +704,6 @@
                 }
             });
             
-            // Cập nhật các trạng thái hiển thị động
             const themeTxt = document.getElementById('theme-text');
             const isDark = document.documentElement.classList.contains('dark');
             themeTxt.textContent = isDark ? translations[lang]['theme_dark'] : translations[lang]['theme_light'];
@@ -840,6 +838,7 @@
         let peepStream = null;
         let trackingInstance = null;
         let scriptsLoaded = false;
+        let peepingFrameCount = 0; // Đếm số khung hình liên tiếp phát hiện có nhiều người xem để lọc nhiễu
         
         const videoEl = document.getElementById('peep-video');
         const btnTogglePeep = document.getElementById('btn-toggle-peep');
@@ -849,7 +848,7 @@
         const privacyShield = document.getElementById('privacy-shield-overlay');
         const aiStatusText = document.getElementById('ai-status-text');
 
-        // Hàm tải tuần tự các script tracking và face model để không bị lỗi bất đồng bộ
+        // Hàm tải tuần tự các script tracking và face model để tránh lỗi bất đồng bộ
         function loadTrackingScripts() {
             return new Promise((resolve, reject) => {
                 if (window.tracking) {
@@ -881,14 +880,13 @@
             try {
                 aiStatusText.textContent = currentLang === "vi" ? "Đang tải mô hình AI..." : (currentLang === "en" ? "Loading AI models..." : "正在加载AI模型...");
                 
-                // Đảm bảo các thư viện tracking đã được tải đầy đủ
                 if (!scriptsLoaded) {
                     await loadTrackingScripts();
                 }
 
                 aiStatusText.textContent = currentLang === "vi" ? "Đang yêu cầu camera..." : (currentLang === "en" ? "Requesting camera..." : "正在请求相机...");
 
-                // Yêu cầu luồng camera trước một cách an toàn và tương thích tối đa với mọi thiết bị di động
+                // Khởi tạo camera trước
                 peepStream = await navigator.mediaDevices.getUserMedia({
                     video: {
                         facingMode: "user"
@@ -897,40 +895,30 @@
                 });
                 
                 videoEl.srcObject = peepStream;
-                // Đảm bảo video được phát hành trình mượt mà
                 await videoEl.play();
 
                 aiStatusText.textContent = currentLang === "vi" ? "AI đang bảo vệ bạn ngầm" : (currentLang === "en" ? "AI is protecting you" : "AI防窥护盾运行中");
 
-                // Khởi tạo Tracking Object
+                // Khởi tạo Tracker nhận diện khuôn mặt
                 const tracker = new tracking.ObjectTracker('face');
                 tracker.setInitialScale(4.0);
                 tracker.setStepSize(2);
                 tracker.setEdgesDensity(0.1);
 
-                // Lắng nghe hành vi nhận diện
+                // SỬA LỖI LOGIC: CHỈ KHOÁ KHI CÓ TỪ 2 NGƯỜI TRỞ LÊN
                 tracker.on('track', function(event) {
                     if (!peepActive) return;
 
-                    // Nếu phát hiện có từ 2 khuôn mặt trở lên nhìn lén từ sau hoặc hai bên
+                    // Nếu có từ 2 người trở lên lọt vào khung hình camera trước
                     if (event.data.length >= 2) {
-                        privacyShield.classList.remove('hidden');
-                    } else if (event.data.length === 1) {
-                        // Tính toán độ lệch tâm khuôn mặt trong khung hình camera trước để bắt góc nghiêng nhìn trộm
-                        const face = event.data[0];
-                        // Tỉ lệ kích thước khung hình mặc định của video tracking.js
-                        const videoWidth = videoEl.videoWidth || 320;
-                        const centerOfFrame = videoWidth / 2;
-                        const faceCenter = face.x + (face.width / 2);
-                        
-                        // Nếu khuôn mặt lệch tâm quá mạnh chứng tỏ người dùng đang cầm xéo máy hoặc có người lạ ép sát góc
-                        if (Math.abs(faceCenter - centerOfFrame) > (videoWidth * 0.23)) {
+                        peepingFrameCount++;
+                        // Phải nhận diện liên tục 3 khung hình để tránh nhiễu/nhấp nháy chập chập chập chờn
+                        if (peepingFrameCount >= 3) {
                             privacyShield.classList.remove('hidden');
-                        } else {
-                            privacyShield.classList.add('hidden');
                         }
                     } else {
-                        // Không có ai nằm trong tầm nhìn trực diện tối ưu của lá chắn
+                        // Reset bộ đếm và tắt chế độ che khuất ngay lập tức nếu chỉ có 1 người xem (hoặc không ai cả)
+                        peepingFrameCount = 0;
                         privacyShield.classList.add('hidden');
                     }
                 });
@@ -951,6 +939,7 @@
 
         function stopAntiPeepAI() {
             peepActive = false;
+            peepingFrameCount = 0;
             privacyShield.classList.add('hidden');
             aiStatusText.textContent = translations[currentLang]['anti_peep_subtitle'];
             
