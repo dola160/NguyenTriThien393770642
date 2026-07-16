@@ -131,7 +131,7 @@
                         <i data-lucide="eye-off" class="w-3.5 h-3.5"></i>
                         <span data-lang-key="anti_peep_title">Chống nhìn trộm (AI)</span>
                     </span>
-                    <span id="ai-status-text" class="text-[9px] text-slate-400 dark:text-slate-500 font-semibold" data-lang-key="anti_peep_subtitle">Tự động khóa khi bị nhìn lén</span>
+                    <span id="ai-status-text" class="text-[9px] text-slate-400 dark:text-slate-500 font-semibold" data-lang-key="anti_peep_subtitle">Tự động khóa khi có từ 2 người xem</span>
                 </div>
                 <button id="btn-toggle-peep" class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-bold transition-all active:scale-95 text-slate-500">
                     <i data-lucide="shield-alert" id="peep-icon-off" class="w-4 h-4 text-slate-400"></i>
@@ -430,7 +430,7 @@
                 <i data-lucide="eye-off" class="w-10 h-10"></i>
             </div>
             <div class="text-white font-black text-center mb-2 text-xl tracking-wider uppercase animate-pulse" data-lang-key="peeping_alert">CẢNH BÁO: PHÁT HIỆN NHÌN TRỘM!</div>
-            <p class="text-slate-300 font-bold text-xs text-center max-w-xs leading-relaxed" data-lang-key="peeping_desc">Hệ thống AI đã làm mờ màn hình để bảo mật thông tin lý lịch cá nhân của Nguyễn Trí Thiện khỏi các ánh nhìn nghiêng góc từ bên thứ hai.</p>
+            <p class="text-slate-300 font-bold text-xs text-center max-w-xs leading-relaxed" data-lang-key="peeping_desc">Hệ thống AI phát hiện từ 2 người trở lên và đã làm mờ màn hình để bảo mật thông tin lý lịch cá nhân của Nguyễn Trí Thiện.</p>
             <div class="mt-6 flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-full border border-white/10 text-[10px] text-teal-400 font-black tracking-widest uppercase">
                 <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> <span data-lang-key="ai_sec_active">Lá chắn AI đang hoạt động</span>
             </div>
@@ -463,7 +463,7 @@
                 Vô hiệu hóa kéo hình ảnh, sao chép văn bản để bảo vệ tối đa dữ liệu cá nhân của Nguyễn Trí Thiện.
             </p>
             <p class="text-[9px] text-slate-300 dark:text-slate-600 font-bold tracking-widest mt-3 uppercase">
-                <span data-lang-key="version_label">Phiên bản</span> v3.8.0 (Pro Premium AI)
+                <span data-lang-key="version_label">Phiên bản</span> v3.9.0 (Pro Premium AI Shield)
             </p>
         </div>
     </div>
@@ -905,20 +905,31 @@
                 tracker.setStepSize(2);
                 tracker.setEdgesDensity(0.1);
 
-                // SỬA LỖI LOGIC: CHỈ KHOÁ KHI CÓ TỪ 2 NGƯỜI TRỞ LÊN
+                // LOGIC CHỐNG CHỚP TẮT (FIlTER NHIỄU & LỌC TRỄ):
                 tracker.on('track', function(event) {
                     if (!peepActive) return;
 
-                    // Nếu có từ 2 người trở lên lọt vào khung hình camera trước
-                    if (event.data.length >= 2) {
-                        peepingFrameCount++;
-                        // Phải nhận diện liên tục 3 khung hình để tránh nhiễu/nhấp nháy chập chập chập chờn
-                        if (peepingFrameCount >= 3) {
-                            privacyShield.classList.remove('hidden');
-                        }
+                    // Bước 1: Lọc bỏ toàn bộ các nhiễu từ hậu cảnh bằng bộ lọc kích thước. 
+                    // Khuôn mặt thật tối thiểu phải đạt kích thước 45x45 pixels để loại bỏ nhiễu hạt nhỏ lấp lánh ở hậu cảnh.
+                    const minFaceSize = 45;
+                    const realFaces = event.data.filter(face => face.width >= minFaceSize && face.height >= minFaceSize);
+                    const faceCount = realFaces.length;
+
+                    // Bước 2: Cơ chế đệm tích lũy (Accumulator Debounce Logic)
+                    if (faceCount >= 2) {
+                        // Tăng dần bộ đếm nếu phát hiện nhiều khuôn mặt thật
+                        peepingFrameCount = Math.min(peepingFrameCount + 1, 15);
                     } else {
-                        // Reset bộ đếm và tắt chế độ che khuất ngay lập tức nếu chỉ có 1 người xem (hoặc không ai cả)
-                        peepingFrameCount = 0;
+                        // Giảm dần một cách từ từ để chống hiện tượng giật rung/chớp tắt màn hình
+                        peepingFrameCount = Math.max(peepingFrameCount - 1, 0);
+                    }
+
+                    // Bước 3: Đưa ra quyết định hiển thị ổn định (Hysteresis)
+                    if (peepingFrameCount >= 10) {
+                        // Chỉ kích hoạt lá chắn khi có tối thiểu 10 khung hình phát hiện liên tục (khoảng 0.5s - 1s)
+                        privacyShield.classList.remove('hidden');
+                    } else if (peepingFrameCount <= 2) {
+                        // Chỉ mở khóa khi bộ đếm rơi sâu về mức an toàn (dưới 2)
                         privacyShield.classList.add('hidden');
                     }
                 });
