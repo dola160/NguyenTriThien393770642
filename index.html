@@ -33,7 +33,7 @@
             perspective: 1000px;
         }
         .parallax-bg {
-            transition: transform 0.1s ease-out;
+            transition: transform 0.15s ease-out;
             transform-style: preserve-3d;
         }
 
@@ -49,11 +49,12 @@
         
         <!-- PHẦN ĐẦU: ẢNH BÌA PARALLAX & NÚT CÀI ĐẶT -->
         <div class="relative h-48 w-full bg-slate-200 dark:bg-slate-800 overflow-hidden shrink-0 parallax-container cursor-pointer" id="cover-container">
+            <!-- Đã sửa lỗi căn lề bằng cách dùng left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 kết hợp phủ ảnh rộng hơn (125%) -->
             <img 
                 id="cover-img"
                 src="https://cdnv2.tgdd.vn/mwg-static/common/News/1586975/hinh-nen-may-tinh-cute-de-thuong%20%2827%29.jpg" 
                 alt="[Ảnh bìa Nguyễn Trí Thiện]" 
-                class="w-[115%] h-[115%] object-cover pointer-events-none absolute -top-[7.5%] -left-[7.5%] parallax-bg"
+                class="w-[125%] h-[125%] object-cover pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 parallax-bg"
                 onerror="this.src='https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=600'"
                 draggable="false"
             />
@@ -636,7 +637,7 @@
                     el.innerText = translations[lang][key];
                 }
             });
-            // Cập nhật giá trị phông chữ trong thẻ select nếu có
+            // Cập nhật trạng thái hiển thị trong nút cài đặt
             const themeTxt = document.getElementById('theme-text');
             const isDark = document.documentElement.classList.contains('dark');
             themeTxt.textContent = isDark ? translations[lang]['theme_dark'] : translations[lang]['theme_light'];
@@ -646,7 +647,7 @@
             soundTxt.textContent = isSoundOn ? translations[lang]['sound_on'] : translations[lang]['sound_off'];
         }
 
-        // --- 2. HỆ THỐNG ÂM THANH CẢM ỨNG CHÂN THẬT (Web Audio API) ---
+        // --- 2. HỆ THỐNG ÂM THANH CẢM ỨNG (Web Audio API) ---
         let touchSoundEnabled = true;
         let audioCtx = null;
 
@@ -665,7 +666,6 @@
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
 
-                // Tạo âm thanh nhấn cơ học haptic thanh thoát, tinh tế
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(1500, audioCtx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.08);
@@ -680,15 +680,13 @@
             }
         }
 
-        // Kích hoạt âm thanh trên tất cả hành động bấm
         document.addEventListener('click', (e) => {
-            // Chỉ phát âm khi bấm vào nút, đường link, hoặc đối tượng tương tác được
             if (e.target.closest('button') || e.target.closest('a') || e.target.closest('select') || e.target.closest('.cursor-pointer')) {
                 playTapSound();
             }
         });
 
-        // --- 3. HIỆU ỨNG PARALLAX 3D (CHỈNH SỬA CHIỀU SÂU TUYỆT ĐỐI) ---
+        // --- 3. HIỆU ỨNG PARALLAX 3D (ĐÃ KHẮC PHỤC LỖI LỆCH KHUNG ẢNH BÌA) ---
         const coverContainer = document.getElementById('cover-container');
         const coverImg = document.getElementById('cover-img');
 
@@ -698,36 +696,34 @@
             const x = e.clientX - rect.left - (rect.width / 2);
             const y = e.clientY - rect.top - (rect.height / 2);
             
-            // Xoay góc ảnh bìa tạo cảm giác 3D
-            const rotateX = -(y / rect.height) * 15; 
-            const rotateY = (x / rect.width) * 15;
-            const transX = (x / rect.width) * 12;
-            const transY = (y / rect.height) * 12;
+            const rotateX = -(y / rect.height) * 12; 
+            const rotateY = (x / rect.width) * 12;
+            const transX = (x / rect.width) * 15;
+            const transY = (y / rect.height) * 15;
 
-            coverImg.style.transform = `scale(1.15) translate(${transX}px, ${transY}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            // Di chuyển Parallax tương đối so với vị trí gốc ở giữa (left-1/2 top-1/2) để loại bỏ hoàn toàn viền xám
+            coverImg.style.transform = `translate(calc(-50% + ${transX}px), calc(-50% + ${transY}px)) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
         });
 
         coverContainer.addEventListener('mouseleave', () => {
-            // Quay về trạng thái phẳng ban đầu nhẹ nhàng
-            coverImg.style.transform = 'scale(1.15) translate(0px, 0px) rotateX(0deg) rotateY(0deg)';
+            // Quay về tâm điểm an toàn nhẹ nhàng
+            coverImg.style.transform = 'translate(-50%, -50%) rotateX(0deg) rotateY(0deg)';
         });
 
-        // Thiết bị di động: Parallax bằng Gyroscope cảm biến con quay hồi chuyển
+        // Thiết bị di động: Sử dụng cảm biến gia tốc kế (Gyroscope)
         if (window.DeviceOrientationEvent) {
-            // Yêu cầu quyền truy cập gia tốc kế đối với một số dòng máy iOS
             window.addEventListener('deviceorientation', (e) => {
                 const beta = e.beta;   // Nghiêng trước/sau [-180, 180]
                 const gamma = e.gamma; // Nghiêng trái/phải [-90, 90]
 
                 if (beta !== null && gamma !== null) {
-                    // Giới hạn vùng giá trị tự nhiên khi cầm máy
                     const tiltX = Math.max(-30, Math.min(30, beta - 45)); 
                     const tiltY = Math.max(-30, Math.min(30, gamma));
 
                     const transX = (tiltY / 30) * 15;
                     const transY = (tiltX / 30) * 15;
 
-                    coverImg.style.transform = `scale(1.15) translate(${transX}px, ${transY}px) rotateX(${-transY/2}deg) rotateY(${transX/2}deg)`;
+                    coverImg.style.transform = `translate(calc(-50% + ${transX}px), calc(-50% + ${transY}px)) rotateX(${-transY/2}deg) rotateY(${transX/2}deg)`;
                 }
             }, true);
         }
@@ -757,7 +753,6 @@
         });
 
         coverContainer.addEventListener('click', (e) => {
-            // Không mở khi bấm vào nút cài đặt ở góc bìa
             if (e.target.closest('#btn-settings')) return;
             e.stopPropagation();
             openLightbox(coverImg.src, translations[currentLang]['cover_caption']);
@@ -772,13 +767,12 @@
             closeLightbox();
         });
 
-        // --- 5. TỰ ĐỘNG BẬT SÁNG MÀN HÌNH CHẤT LƯỢNG CAO (GLOW MODE) ---
+        // --- 5. TỰ ĐỘNG GIỮ SÁNG MÀN HÌNH CHẤT LƯỢNG CAO ---
         const qrGlowOverlay = document.getElementById('qr-glow-overlay');
         const qrGlowImg = document.getElementById('qr-glow-img');
         const btnCloseGlow = document.getElementById('btn-close-glow');
         let wakeLock = null;
 
-        // Yêu cầu giữ màn hình sáng bằng Wake Lock API
         async function requestWakeLock() {
             try {
                 if ('wakeLock' in navigator) {
@@ -797,14 +791,11 @@
             }
         }
 
-        // Ghi đè hàm toggleQR cũ để kích hoạt tính năng siêu sáng thông minh
         function toggleQR(id) {
             const targetQRImg = document.querySelector(`#${id} img`);
             if (targetQRImg) {
-                // Hiển thị giao diện tăng tương phản độ sáng trắng
                 qrGlowImg.src = targetQRImg.src;
                 qrGlowOverlay.classList.remove('hidden');
-                // Gọi API giữ sáng màn hình
                 requestWakeLock();
             }
         }
@@ -816,7 +807,7 @@
             releaseWakeLock();
         });
 
-        // Hiển thị hộp thông báo toast bảo mật/thành công mượt mà
+        // Thông báo Toast bảo mật
         function showToast(message, type = "success") {
             const toast = document.getElementById('toast-message');
             const toastText = document.getElementById('toast-text');
@@ -845,7 +836,7 @@
 
         window.showToast = showToast;
 
-        // CHẶN CHUỘT PHẢI, SAO CHÉP VÀ KÉO THẢ HÌNH ẢNH
+        // Chặn tương tác trái phép bảo vệ riêng tư
         document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
             showToast(translations[currentLang]['toast_right_click_blocked'], "warning");
@@ -880,7 +871,6 @@
             settingsPanel.classList.add('hidden');
         });
 
-        // Đóng panel cài đặt khi bấm ra ngoài vùng panel
         document.addEventListener('click', (e) => {
             if (!settingsPanel.classList.contains('hidden') && !settingsPanel.contains(e.target) && e.target !== btnSettings && !btnSettings.contains(e.target)) {
                 settingsPanel.classList.add('hidden');
@@ -927,7 +917,7 @@
             }
         });
 
-        // Co giãn phông chữ toàn bộ trang đồng bộ bằng REM gốc
+        // Co giãn phông chữ
         const fontSizes = [
             { label: 'A-', size: '13.5px' },
             { label: 'Mặc định', size: '16px' },
@@ -984,26 +974,22 @@
         // --- ĐIỀU KHIỂN QR & CHIA SẺ ---
         const currentCardUrl = window.location.href;
 
-        // Gán ảnh QR tự động dựa trên URL trang web thực tế hiện tại
         const imgQrCurrentCard = document.getElementById('img-qr-current-card');
         const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(currentCardUrl)}`;
         imgQrCurrentCard.src = qrCodeUrl;
 
-        // Xử lý nút tải QR danh thiếp cá nhân hiện tại
         const btnDownloadThisQr = document.getElementById('btn-download-this-qr');
         btnDownloadThisQr.addEventListener('click', (e) => {
             e.stopPropagation();
             downloadQR(qrCodeUrl, "QR_DanhThiep_TriThien.png");
         });
 
-        // Xử lý nút copy liên kết danh thiếp
         const btnCopyCardLink = document.getElementById('btn-copy-card-link');
         btnCopyCardLink.addEventListener('click', (e) => {
             e.stopPropagation();
             fallbackCopy(currentCardUrl);
         });
 
-        // Nút chia sẻ chính (Main Share Button)
         const btnMainShare = document.getElementById('btn-main-share');
         btnMainShare.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -1072,10 +1058,9 @@
             document.body.removeChild(textArea);
         }
         
-        // Khởi tạo mặc định
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
-            updateLanguage('vi'); // Mặc định Tiếng Việt
+            updateLanguage('vi'); // Mặc định là Tiếng Việt
         });
     </script>
 </body>
