@@ -28,6 +28,15 @@
         .font-serif-custom { font-family: Georgia, Cambria, "Times New Roman", Times, serif; }
         .font-mono-custom { font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace; }
         
+        /* Hiệu ứng Parallax 3D cho ảnh bìa */
+        .parallax-container {
+            perspective: 1000px;
+        }
+        .parallax-bg {
+            transition: transform 0.1s ease-out;
+            transform-style: preserve-3d;
+        }
+
         @media print {
             body { display: none !important; }
         }
@@ -38,16 +47,25 @@
     <!-- CONTAINER CHÍNH -->
     <div id="main-card" class="w-full max-w-md bg-white dark:bg-slate-900 min-h-screen shadow-2xl relative flex flex-col justify-between overflow-hidden">
         
-        <!-- PHẦN ĐẦU: ẢNH BÌA & NÚT CÀI ĐẶT -->
-        <div class="relative h-48 w-full bg-slate-200 dark:bg-slate-800 overflow-hidden shrink-0">
+        <!-- PHẦN ĐẦU: ẢNH BÌA PARALLAX & NÚT CÀI ĐẶT -->
+        <div class="relative h-48 w-full bg-slate-200 dark:bg-slate-800 overflow-hidden shrink-0 parallax-container cursor-pointer" id="cover-container">
             <img 
+                id="cover-img"
                 src="https://cdnv2.tgdd.vn/mwg-static/common/News/1586975/hinh-nen-may-tinh-cute-de-thuong%20%2827%29.jpg" 
                 alt="[Ảnh bìa Nguyễn Trí Thiện]" 
-                class="w-full h-full object-cover pointer-events-none"
+                class="w-[115%] h-[115%] object-cover pointer-events-none absolute -top-[7.5%] -left-[7.5%] parallax-bg"
                 onerror="this.src='https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=600'"
                 draggable="false"
             />
             
+            <!-- Lớp phủ tối nhẹ để tăng tương phản -->
+            <div class="absolute inset-0 bg-black/10 pointer-events-none z-10"></div>
+
+            <!-- Nhãn hướng dẫn bấm xem ảnh bìa -->
+            <div class="absolute bottom-2 left-3 bg-black/40 text-[10px] text-white/90 px-2 py-0.5 rounded-full backdrop-blur-sm z-20 flex items-center gap-1 font-bold pointer-events-none">
+                <i data-lucide="zoom-in" class="w-3 h-3"></i> <span data-lang-key="tap_to_view_cover">Chạm để xem ảnh bìa</span>
+            </div>
+
             <!-- Nút cài đặt góc trên bên phải -->
             <div class="absolute top-3 right-3 flex items-center gap-2 z-30">
                 <button id="btn-settings" class="bg-black/40 hover:bg-black/60 text-white p-2 rounded-full backdrop-blur-sm transition-all active:scale-95" title="Cài đặt giao diện">
@@ -60,48 +78,68 @@
         <div id="settings-panel" class="hidden absolute top-16 left-3 right-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-4 rounded-2xl shadow-xl z-40 border border-slate-200 dark:border-slate-800 transition-all duration-300">
             <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-200 dark:border-slate-800">
                 <h3 class="font-bold text-sm uppercase tracking-wider flex items-center gap-2 text-slate-800 dark:text-white">
-                    <i data-lucide="settings" class="w-4 h-4"></i> Tùy Chỉnh Giao Diện
+                    <i data-lucide="settings" class="w-4 h-4"></i> <span data-lang-key="customize_ui">Tùy Chỉnh Giao Diện</span>
                 </h3>
                 <button id="btn-close-settings" class="text-slate-500 hover:text-slate-800 dark:hover:text-white">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
 
-            <!-- 1. Chế độ giao diện -->
+            <!-- 1. Chọn Ngôn ngữ -->
             <div class="flex items-center justify-between py-2 text-slate-800 dark:text-slate-200">
-                <span class="text-xs font-semibold">Chế độ giao diện</span>
+                <span class="text-xs font-semibold" data-lang-key="select_language">Ngôn ngữ hiển thị</span>
+                <select id="language-select" class="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-xs font-semibold border border-slate-200 dark:border-slate-700 focus:outline-none">
+                    <option value="vi">Tiếng Việt 🇻🇳</option>
+                    <option value="en">English 🇬🇧</option>
+                    <option value="zh">中文 🇨🇳</option>
+                </select>
+            </div>
+
+            <!-- 2. Chế độ giao diện -->
+            <div class="flex items-center justify-between py-2 border-t border-slate-100 dark:border-slate-800 text-slate-800 dark:text-slate-200">
+                <span class="text-xs font-semibold" data-lang-key="ui_mode">Chế độ giao diện</span>
                 <button id="btn-toggle-theme" class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium transition-all active:scale-95">
                     <i data-lucide="sun" id="theme-icon-light" class="w-4 h-4 text-amber-500"></i>
                     <i data-lucide="moon" id="theme-icon-dark" class="w-4 h-4 text-indigo-400 hidden"></i>
-                    <span id="theme-text">Sáng</span>
+                    <span id="theme-text" data-lang-key="theme_light">Sáng</span>
                 </button>
             </div>
 
-            <!-- 2. Kích thước chữ -->
+            <!-- 3. Âm thanh cảm ứng -->
             <div class="flex items-center justify-between py-2 border-t border-slate-100 dark:border-slate-800 text-slate-800 dark:text-slate-200">
-                <span class="text-xs font-semibold">Kích thước chữ</span>
+                <span class="text-xs font-semibold" data-lang-key="touch_sound">Âm thanh cảm ứng</span>
+                <button id="btn-toggle-sound" class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium transition-all active:scale-95">
+                    <i data-lucide="volume-2" id="sound-icon-on" class="w-4 h-4 text-emerald-500"></i>
+                    <i data-lucide="volume-x" id="sound-icon-off" class="w-4 h-4 text-rose-500 hidden"></i>
+                    <span id="sound-text" data-lang-key="sound_on">Bật</span>
+                </button>
+            </div>
+
+            <!-- 4. Kích thước chữ -->
+            <div class="flex items-center justify-between py-2 border-t border-slate-100 dark:border-slate-800 text-slate-800 dark:text-slate-200">
+                <span class="text-xs font-semibold" data-lang-key="font_size">Kích thước chữ</span>
                 <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
                     <button id="font-size-down" class="px-2.5 py-1 text-xs font-bold rounded hover:bg-white dark:hover:bg-slate-700 transition" title="Chữ nhỏ">A-</button>
-                    <span id="font-size-label" class="text-xs px-2 font-bold min-w-[70px] text-center">Mặc định</span>
+                    <span id="font-size-label" class="text-xs px-2 font-bold min-w-[70px] text-center" data-lang-key="font_default">Mặc định</span>
                     <button id="font-size-up" class="px-2.5 py-1 text-xs font-bold rounded hover:bg-white dark:hover:bg-slate-700 transition" title="Chữ lớn">A+</button>
                 </div>
             </div>
 
-            <!-- 3. Kiểu phông chữ hiển thị -->
+            <!-- 5. Kiểu phông chữ hiển thị -->
             <div class="flex items-center justify-between py-2 border-t border-slate-100 dark:border-slate-800 text-slate-800 dark:text-slate-200">
-                <span class="text-xs font-semibold">Kiểu phông chữ</span>
+                <span class="text-xs font-semibold" data-lang-key="font_style">Kiểu phông chữ</span>
                 <select id="font-family-select" class="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-xs font-semibold border border-slate-200 dark:border-slate-700 focus:outline-none">
-                    <option value="font-sans-custom">Không chân (Sans)</option>
-                    <option value="font-serif-custom">Có chân (Serif)</option>
-                    <option value="font-mono-custom">Đơn trị (Mono)</option>
+                    <option value="font-sans-custom" data-lang-key="font_sans">Không chân (Sans)</option>
+                    <option value="font-serif-custom" data-lang-key="font_serif">Có chân (Serif)</option>
+                    <option value="font-mono-custom" data-lang-key="font_mono">Đơn trị (Mono)</option>
                 </select>
             </div>
 
-            <!-- 4. Chi tiết bảo mật tĩnh -->
+            <!-- 6. Chi tiết bảo mật tĩnh -->
             <div class="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] text-emerald-600 dark:text-emerald-400 flex flex-col gap-1">
-                <div class="flex items-center gap-1">
+                <div class="flex items-center gap-1 font-semibold">
                     <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
-                    Đã bảo vệ an toàn: Chặn chuột phải, chống sao chép và kéo ảnh.
+                    <span data-lang-key="security_notice">Đã bảo vệ an toàn: Chặn chuột phải, chống sao chép và kéo ảnh.</span>
                 </div>
             </div>
         </div>
@@ -109,75 +147,81 @@
         <!-- THÔNG TIN CÁ NHÂN CHÍNH -->
         <div class="px-6 -mt-16 relative z-10 flex-grow" id="content-body">
             <!-- Ảnh đại diện Avatar tròn có viền nổi bật -->
-            <div class="flex justify-center">
-                <div class="relative group">
+            <div class="flex justify-center mb-3">
+                <div class="relative group cursor-pointer" id="avatar-container">
                     <div class="absolute -inset-1 bg-gradient-to-r from-teal-400 to-blue-500 rounded-full blur opacity-30 group-hover:opacity-100 transition duration-1000"></div>
                     <div class="w-32 h-32 rounded-full border-4 border-white dark:border-slate-900 overflow-hidden relative shadow-lg">
                         <img 
+                            id="avatar-img"
                             src="https://dongvat.edu.vn/upload/2025/01/avatar-cute-meo-08.webp" 
                             alt="[Avatar Nguyễn Trí Thiện]" 
                             class="w-full h-full object-cover pointer-events-none"
                             onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300'"
                             draggable="false"
                         />
+                        <!-- Biểu tượng chạm để phóng to -->
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
+                            <i data-lucide="zoom-in" class="w-8 h-8 text-white"></i>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Họ và Tên -->
-            <div class="text-center mt-3 mb-4">
+            <div class="text-center mt-1 mb-4">
                 <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center justify-center gap-1.5">
                     Nguyễn Trí Thiện
                     <i data-lucide="badge-check" class="w-5 h-5 text-blue-500 fill-blue-500" title="Tài khoản đã xác minh"></i>
                 </h1>
-                <p class="text-xs font-bold text-teal-600 dark:text-teal-400 uppercase tracking-widest mt-0.5">Thành viên Danh Dự</p>
+                <p class="text-xs font-bold text-teal-600 dark:text-teal-400 uppercase tracking-widest mt-0.5" data-lang-key="honorary_member">Thành viên Danh Dự</p>
             </div>
 
             <!-- NÚT CHIA SẺ LIÊN KẾT NHANH ĐỂ NGƯỜI KHÁC XEM -->
             <div class="mt-3">
                 <button id="btn-main-share" class="w-full py-3 bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-600 hover:to-blue-700 text-white font-bold text-sm rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all">
                     <i data-lucide="share-2" class="w-5 h-5"></i>
-                    Chia sẻ Danh thiếp cho mọi người
+                    <span data-lang-key="share_card">Chia sẻ Danh thiếp cho mọi người</span>
                 </button>
             </div>
 
             <!-- Bảng thông tin lý lịch chi tiết -->
             <div class="mt-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-100 dark:border-slate-800/80">
                 <h2 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1">
-                    <i data-lucide="user" class="w-3.5 h-3.5"></i> Lý lịch cá nhân
+                    <i data-lucide="user" class="w-3.5 h-3.5"></i> <span data-lang-key="personal_profile">Lý lịch cá nhân</span>
                 </h2>
                 <div class="grid grid-cols-2 gap-y-3.5 gap-x-2 text-sm">
                     <div class="flex flex-col">
-                        <span class="text-xs text-slate-400 dark:text-slate-500 font-medium">Ngày sinh</span>
+                        <span class="text-xs text-slate-400 dark:text-slate-500 font-medium" data-lang-key="birthday">Ngày sinh</span>
                         <span class="font-bold">05/12/2006</span>
                     </div>
                     <div class="flex flex-col">
-                        <span class="text-xs text-slate-400 dark:text-slate-500 font-medium">Giới tính</span>
+                        <span class="text-xs text-slate-400 dark:text-slate-500 font-medium" data-lang-key="gender">Giới tính</span>
                         <span class="font-bold flex items-center gap-1">
-                            <i data-lucide="mars" class="w-4 h-4 text-blue-500"></i> Nam
+                            <i data-lucide="mars" class="w-4 h-4 text-blue-500"></i> <span data-lang-key="gender_male">Nam</span>
                         </span>
                     </div>
                     <div class="flex flex-col">
-                        <span class="text-xs text-slate-400 dark:text-slate-500 font-medium">Dân tộc</span>
-                        <span class="font-bold">Kinh</span>
+                        <span class="text-xs text-slate-400 dark:text-slate-500 font-medium" data-lang-key="ethnicity">Dân tộc</span>
+                        <span class="font-bold" data-lang-key="ethnicity_kinh">Kinh</span>
                     </div>
                     <div class="flex flex-col">
-                        <span class="text-xs text-slate-400 dark:text-slate-500 font-medium">Quốc gia</span>
-                        <span class="font-bold">🇻🇳 Việt Nam</span>
+                        <span class="text-xs text-slate-400 dark:text-slate-500 font-medium" data-lang-key="country">Quốc gia</span>
+                        <span class="font-bold" data-lang-key="nation_vn">🇻🇳 Việt Nam</span>
                     </div>
                     <div class="flex flex-col col-span-2">
-                        <span class="text-xs text-slate-400 dark:text-slate-500 font-medium">Địa chỉ</span>
-                        <span class="font-bold flex items-center gap-1">
-                            <i data-lucide="map-pin" class="w-4 h-4 text-red-500 shrink-0"></i> Ấp 9B, Tân Thạnh, An Giang
+                        <span class="text-xs text-slate-400 dark:text-slate-500 font-medium" data-lang-key="address">Địa chỉ</span>
+                        <span class="font-bold flex items-center gap-1 text-xs sm:text-sm">
+                            <i data-lucide="map-pin" class="w-4 h-4 text-red-500 shrink-0"></i> <span data-lang-key="full_address">Ấp 9B, Tân Thạnh, An Giang</span>
                         </span>
                     </div>
                 </div>
             </div>
 
-            <!-- THÔNG TIN LIÊN HỆ ĐIỆN TỬ (CHẠY THẬT) -->
+            <!-- THÔNG TIN LIÊN HỆ ĐIỆN TỬ -->
             <div class="mt-4 space-y-2.5">
                 <!-- Gọi điện trực tiếp -->
                 <a 
+                    id="btn-phone-call"
                     href="tel:+84393770642" 
                     class="flex items-center justify-between p-3.5 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/10 dark:to-teal-950/10 rounded-xl border border-emerald-200/50 dark:border-emerald-800/30 hover:shadow-md transition-all active:scale-[0.98]"
                     draggable="false"
@@ -187,32 +231,33 @@
                             <i data-lucide="phone" class="w-5 h-5"></i>
                         </div>
                         <div class="flex flex-col">
-                            <span class="text-xs text-emerald-600 dark:text-emerald-400 font-bold">Số điện thoại liên hệ</span>
+                            <span class="text-xs text-emerald-600 dark:text-emerald-400 font-bold" data-lang-key="phone_label">Số điện thoại liên hệ</span>
                             <span class="font-black text-slate-900 dark:text-white">+84 393 770 642</span>
                         </div>
                     </div>
                     <div class="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 text-xs font-black shrink-0">
-                        Gọi điện <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        <span data-lang-key="call_now">Gọi điện</span> <i data-lucide="chevron-right" class="w-4 h-4"></i>
                     </div>
                 </a>
 
                 <!-- Gửi Email trực tiếp -->
                 <a 
+                    id="btn-email-send"
                     href="mailto:thiensignature393770642@gmail.com" 
                     class="flex items-center justify-between p-3.5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/10 dark:to-indigo-950/10 rounded-xl border border-blue-200/50 dark:border-blue-800/30 hover:shadow-md transition-all active:scale-[0.98]"
                     draggable="false"
                 >
-                    <div class="flex items-center gap-3">
-                        <div class="p-2 bg-blue-500 text-white rounded-lg">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="p-2 bg-blue-500 text-white rounded-lg shrink-0">
                             <i data-lucide="mail" class="w-5 h-5"></i>
                         </div>
-                        <div class="flex flex-col">
-                            <span class="text-xs text-blue-600 dark:text-blue-400 font-bold">Email công việc</span>
+                        <div class="flex flex-col min-w-0">
+                            <span class="text-xs text-blue-600 dark:text-blue-400 font-bold" data-lang-key="email_label">Email công việc</span>
                             <span class="font-black text-slate-900 dark:text-white text-xs break-all">thiensignature393770642@gmail.com</span>
                         </div>
                     </div>
                     <div class="text-blue-600 dark:text-blue-400 flex items-center gap-1 text-xs font-black shrink-0">
-                        Gửi thư <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        <span data-lang-key="send_email">Gửi thư</span> <i data-lucide="chevron-right" class="w-4 h-4"></i>
                     </div>
                 </a>
             </div>
@@ -220,7 +265,7 @@
             <!-- MẠNG XÃ HỘI VÀ MÃ QR -->
             <div class="mt-6 mb-8 space-y-4">
                 <h2 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                    <i data-lucide="share-2" class="w-3.5 h-3.5"></i> Kết nối mạng xã hội
+                    <i data-lucide="share-2" class="w-3.5 h-3.5"></i> <span data-lang-key="social_connect">Kết nối mạng xã hội</span>
                 </h2>
 
                 <!-- FACEBOOK -->
@@ -236,7 +281,7 @@
                         
                         <div class="flex items-center gap-1.5">
                             <a href="https://www.facebook.com/Trithienair" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 bg-blue-600 text-white font-bold text-xs rounded-lg flex items-center gap-1 hover:bg-blue-700 transition active:scale-95" draggable="false">
-                                <i data-lucide="external-link" class="w-3 h-3"></i> Ghé thăm
+                                <i data-lucide="external-link" class="w-3 h-3"></i> <span data-lang-key="visit">Ghé thăm</span>
                             </a>
                             <button onclick="toggleQR('qr-facebook')" class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-500 dark:text-slate-300 transition" title="Xem mã QR">
                                 <i data-lucide="qr-code" class="w-5 h-5"></i>
@@ -246,16 +291,16 @@
                     
                     <div id="qr-facebook" class="hidden border-t border-slate-100 dark:border-slate-800 p-4 bg-white dark:bg-slate-900/40 text-center transition-all duration-300">
                         <div class="flex flex-col items-center justify-center">
-                            <p class="text-xs text-slate-500 mb-2 font-bold">Mã QR trang cá nhân Facebook</p>
-                            <div class="p-2 bg-white rounded-xl shadow-inner border border-slate-100 inline-block mb-3">
+                            <p class="text-xs text-slate-500 mb-2 font-bold" data-lang-key="qr_fb_title">Mã QR trang cá nhân Facebook</p>
+                            <div class="p-2 bg-white rounded-xl shadow-inner border border-slate-100 inline-block mb-3 relative group overflow-hidden">
                                 <img src="https://i.ibb.co/3Yk2FZsX/QR-Code.png" alt="[QR Facebook]" class="w-40 h-40 object-contain pointer-events-none" id="img-qr-fb" draggable="false">
                             </div>
                             <div class="flex gap-2 w-full justify-center">
                                 <button onclick="downloadQR('https://i.ibb.co/3Yk2FZsX/QR-Code.png', 'QR_Facebook_TriThien.png')" class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-xs font-bold rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition active:scale-95">
-                                    <i data-lucide="download" class="w-3.5 h-3.5"></i> Tải ảnh QR
+                                    <i data-lucide="download" class="w-3.5 h-3.5"></i> <span data-lang-key="download_qr">Tải ảnh QR</span>
                                 </button>
                                 <button onclick="shareLink('https://www.facebook.com/Trithienair')" class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-xs font-bold rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition active:scale-95">
-                                    <i data-lucide="send" class="w-3.5 h-3.5"></i> Chia sẻ Link
+                                    <i data-lucide="send" class="w-3.5 h-3.5"></i> <span data-lang-key="share_link">Chia sẻ Link</span>
                                 </button>
                             </div>
                         </div>
@@ -269,13 +314,13 @@
                             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Icon_of_Zalo.svg/3840px-Icon_of_Zalo.svg.png" alt="[Zalo Logo]" class="w-8 h-8 object-contain rounded-lg pointer-events-none" draggable="false">
                             <div>
                                 <span class="font-bold block text-sm">Zalo</span>
-                                <span class="text-xs text-slate-400 font-semibold">Liên hệ trực tiếp</span>
+                                <span class="text-xs text-slate-400 font-semibold" data-lang-key="zalo_subtitle">Liên hệ trực tiếp</span>
                             </div>
                         </div>
                         
                         <div class="flex items-center gap-1.5">
                             <a href="https://zaloapp.com/qr/p/qbu41cwj3udf?src=qr" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 bg-sky-500 text-white font-bold text-xs rounded-lg flex items-center gap-1 hover:bg-sky-600 transition active:scale-95" draggable="false">
-                                <i data-lucide="message-square" class="w-3 h-3"></i> Nhắn tin
+                                <i data-lucide="message-square" class="w-3 h-3"></i> <span data-lang-key="message">Nhắn tin</span>
                             </a>
                             <button onclick="toggleQR('qr-zalo')" class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-500 dark:text-slate-300 transition" title="Xem mã QR">
                                 <i data-lucide="qr-code" class="w-5 h-5"></i>
@@ -285,16 +330,16 @@
                     
                     <div id="qr-zalo" class="hidden border-t border-slate-100 dark:border-slate-800 p-4 bg-white dark:bg-slate-900/40 text-center transition-all duration-300">
                         <div class="flex flex-col items-center justify-center">
-                            <p class="text-xs text-slate-500 mb-2 font-bold">Mã QR tài khoản Zalo cá nhân</p>
-                            <div class="p-2 bg-white rounded-xl shadow-inner border border-slate-100 inline-block mb-3">
+                            <p class="text-xs text-slate-500 mb-2 font-bold" data-lang-key="qr_zalo_title">Mã QR tài khoản Zalo cá nhân</p>
+                            <div class="p-2 bg-white rounded-xl shadow-inner border border-slate-100 inline-block mb-3 relative group overflow-hidden">
                                 <img src="https://i.ibb.co/HDSrMFKv/qrcode-373254892-88d1fa708e91e9a0ccc8ec380bdba3c0.png" alt="[QR Zalo]" class="w-40 h-40 object-contain pointer-events-none" id="img-qr-zalo" draggable="false">
                             </div>
                             <div class="flex gap-2 w-full justify-center">
                                 <button onclick="downloadQR('https://i.ibb.co/HDSrMFKv/qrcode-373254892-88d1fa708e91e9a0ccc8ec380bdba3c0.png', 'QR_Zalo_TriThien.png')" class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-xs font-bold rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition active:scale-95">
-                                    <i data-lucide="download" class="w-3.5 h-3.5"></i> Tải ảnh QR
+                                    <i data-lucide="download" class="w-3.5 h-3.5"></i> <span data-lang-key="download_qr">Tải ảnh QR</span>
                                 </button>
                                 <button onclick="shareLink('https://zaloapp.com/qr/p/qbu41cwj3udf?src=qr')" class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-xs font-bold rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition active:scale-95">
-                                    <i data-lucide="send" class="w-3.5 h-3.5"></i> Chia sẻ Link
+                                    <i data-lucide="send" class="w-3.5 h-3.5"></i> <span data-lang-key="share_link">Chia sẻ Link</span>
                                 </button>
                             </div>
                         </div>
@@ -309,27 +354,27 @@
                                 <i data-lucide="qr-code" class="w-5 h-5"></i>
                             </div>
                             <div>
-                                <span class="font-bold block text-sm">QR Danh Thiếp Cá Nhân</span>
-                                <span class="text-xs text-slate-400 font-semibold">Quét để lưu thông tin</span>
+                                <span class="font-bold block text-sm" data-lang-key="this_card_qr_title">QR Danh Thiếp Cá Nhân</span>
+                                <span class="text-xs text-slate-400 font-semibold" data-lang-key="this_card_qr_subtitle">Quét để lưu thông tin</span>
                             </div>
                         </div>
-                        <button onclick="toggleQR('qr-this-card')" class="px-3 py-1.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-white font-bold text-xs rounded-lg transition active:scale-95">
+                        <button onclick="toggleQR('qr-this-card')" class="px-3 py-1.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-white font-bold text-xs rounded-lg transition active:scale-95" data-lang-key="view_qr">
                             Xem QR
                         </button>
                     </div>
                     
                     <div id="qr-this-card" class="hidden border-t border-slate-100 dark:border-slate-800 p-4 bg-white dark:bg-slate-900/40 text-center transition-all duration-300">
                         <div class="flex flex-col items-center justify-center">
-                            <p class="text-xs text-slate-500 mb-2 font-bold">Mã QR liên kết trực tiếp tới trang danh thiếp này</p>
-                            <div class="p-2 bg-white rounded-xl shadow-inner border border-slate-100 inline-block mb-3">
+                            <p class="text-xs text-slate-500 mb-2 font-bold" data-lang-key="current_card_qr_desc">Mã QR liên kết trực tiếp tới trang danh thiếp này</p>
+                            <div class="p-2 bg-white rounded-xl shadow-inner border border-slate-100 inline-block mb-3 relative group overflow-hidden">
                                 <img id="img-qr-current-card" alt="[QR Current Card]" class="w-40 h-40 object-contain pointer-events-none" draggable="false">
                             </div>
                             <div class="flex gap-2 w-full justify-center">
                                 <button id="btn-download-this-qr" class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-xs font-bold rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition active:scale-95">
-                                    <i data-lucide="download" class="w-3.5 h-3.5"></i> Tải ảnh QR
+                                    <i data-lucide="download" class="w-3.5 h-3.5"></i> <span data-lang-key="download_qr">Tải ảnh QR</span>
                                 </button>
                                 <button id="btn-copy-card-link" class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-xs font-bold rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition active:scale-95">
-                                    <i data-lucide="copy" class="w-3.5 h-3.5"></i> Sao chép liên kết
+                                    <i data-lucide="copy" class="w-3.5 h-3.5"></i> <span data-lang-key="copy_link">Sao chép liên kết</span>
                                 </button>
                             </div>
                         </div>
@@ -339,25 +384,438 @@
             </div>
         </div>
 
+        <!-- MÀN HÌNH XEM ẢNH TRÀN VIỀN (LIGHTBOX) -->
+        <div id="lightbox-modal" class="hidden fixed inset-0 bg-black/95 backdrop-blur-md z-[20000] flex flex-col items-center justify-center p-4">
+            <!-- Nút đóng góc trên bên phải -->
+            <button id="btn-close-lightbox" class="absolute top-6 right-6 text-white bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition active:scale-95">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            <!-- Khung chứa ảnh -->
+            <div class="max-w-full max-h-[80vh] flex items-center justify-center relative">
+                <img id="lightbox-img" src="" alt="[Xem toàn ảnh]" class="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl transition-transform duration-300">
+            </div>
+            <!-- Chú thích ảnh -->
+            <p id="lightbox-caption" class="text-white/80 text-sm font-bold mt-4 tracking-wide text-center px-4"></p>
+        </div>
+
+        <!-- LỚP PHỦ FULL SÁNG ĐỂ QUÉT QR (SCREEN GLOW EFFECT) -->
+        <div id="qr-glow-overlay" class="hidden fixed inset-0 bg-white z-[15000] flex flex-col items-center justify-center p-6 transition-all duration-300">
+            <div class="text-slate-900 font-black text-center mb-6 text-lg tracking-tight uppercase" data-lang-key="glow_title">MÃ QUÉT CHẤT LƯỢNG CAO</div>
+            <div class="p-4 bg-white rounded-3xl shadow-[0_0_50px_rgba(255,255,255,1)] border border-slate-200">
+                <img id="qr-glow-img" src="" alt="[QR Glow]" class="w-64 h-64 object-contain pointer-events-none">
+            </div>
+            <p class="text-slate-600 font-bold text-xs mt-6 text-center max-w-xs" data-lang-key="glow_subtitle">Đã tự động tăng độ sáng tối đa để máy quét hoạt động dễ dàng nhất!</p>
+            <button id="btn-close-glow" class="mt-8 px-6 py-2.5 bg-slate-900 text-white font-bold rounded-2xl hover:bg-slate-800 transition active:scale-95 flex items-center gap-2">
+                <i data-lucide="x" class="w-4 h-4"></i> <span data-lang-key="close">Đóng</span>
+            </button>
+        </div>
+
         <!-- THÔNG BÁO TOAST POPUP BÊN TRONG TRANG (KHÔNG CHẠY ALERT GIẢ LẬP) -->
         <div id="toast-message" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/95 text-white dark:bg-white dark:text-slate-900 text-xs font-bold px-4 py-3 rounded-full shadow-2xl backdrop-blur-md z-[10000] pointer-events-none flex items-center gap-2 opacity-0 scale-90 transition-all duration-300">
             <i id="toast-icon" data-lucide="shield-check" class="w-4 h-4 text-emerald-500 fill-emerald-500"></i>
             <span id="toast-text">Thành công!</span>
         </div>
 
-        <!-- CHÂN TRANG BẢO MẬT -->
+        <!-- CHÂN TRANG BẢO MẬT & PHIÊN BẢN -->
         <div class="py-5 px-6 border-t border-slate-100 dark:border-slate-800 text-center bg-slate-50/50 dark:bg-slate-950/30 shrink-0">
             <div class="flex items-center justify-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-black uppercase tracking-wider mb-1">
-                <i data-lucide="shield" class="w-4 h-4"></i> Bảo mật thông tin riêng tư
+                <i data-lucide="shield" class="w-4 h-4"></i> <span data-lang-key="security_header">Bảo mật thông tin riêng tư</span>
             </div>
-            <p class="text-[10px] text-slate-400 dark:text-slate-500 max-w-xs mx-auto font-medium">
+            <p class="text-[10px] text-slate-400 dark:text-slate-500 max-w-xs mx-auto font-medium" data-lang-key="security_desc">
                 Vô hiệu hóa kéo hình ảnh, sao chép văn bản để bảo vệ tối đa dữ liệu cá nhân của Nguyễn Trí Thiện.
+            </p>
+            <!-- HIỂN THỊ PHIÊN BẢN ĐÚNG THEO YÊU CẦU -->
+            <p class="text-[9px] text-slate-300 dark:text-slate-600 font-bold tracking-widest mt-3 uppercase">
+                <span data-lang-key="version_label">Phiên bản</span> v3.5.0 (Pro Premium)
             </p>
         </div>
     </div>
 
     <!-- SCRIPT GIAO DIỆN & BẢO MẬT TĨNH -->
     <script>
+        // --- 1. TÀI NGUYÊN ĐA NGÔN NGỮ (VI, EN, ZH) ---
+        const translations = {
+            vi: {
+                tap_to_view_cover: "Chạm để xem ảnh bìa",
+                customize_ui: "Tùy Chỉnh Giao Diện",
+                select_language: "Ngôn ngữ hiển thị",
+                ui_mode: "Chế độ giao diện",
+                touch_sound: "Âm thanh cảm ứng",
+                font_size: "Kích thước chữ",
+                font_style: "Kiểu phông chữ",
+                font_default: "Mặc định",
+                font_sans: "Không chân (Sans)",
+                font_serif: "Có chân (Serif)",
+                font_mono: "Đơn trị (Mono)",
+                security_notice: "Đã bảo vệ an toàn: Chặn chuột phải, chống sao chép và kéo ảnh.",
+                honorary_member: "Thành viên Danh Dự",
+                share_card: "Chia sẻ Danh thiếp cho mọi người",
+                personal_profile: "Lý lịch cá nhân",
+                birthday: "Ngày sinh",
+                gender: "Giới tính",
+                gender_male: "Nam",
+                ethnicity: "Dân tộc",
+                ethnicity_kinh: "Kinh",
+                country: "Quốc gia",
+                nation_vn: "🇻🇳 Việt Nam",
+                address: "Địa chỉ",
+                full_address: "Ấp 9B, Tân Thạnh, An Giang",
+                phone_label: "Số điện thoại liên hệ",
+                call_now: "Gọi điện",
+                email_label: "Email công việc",
+                send_email: "Gửi thư",
+                social_connect: "Kết nối mạng xã hội",
+                visit: "Ghé thăm",
+                download_qr: "Tải ảnh QR",
+                share_link: "Chia sẻ Link",
+                zalo_subtitle: "Liên hệ trực tiếp",
+                message: "Nhắn tin",
+                this_card_qr_title: "QR Danh Thiếp Cá Nhân",
+                this_card_qr_subtitle: "Quét để lưu thông tin",
+                view_qr: "Xem QR",
+                qr_fb_title: "Mã QR trang cá nhân Facebook",
+                qr_zalo_title: "Mã QR tài khoản Zalo cá nhân",
+                current_card_qr_desc: "Mã QR liên kết trực tiếp tới trang danh thiếp này",
+                glow_title: "MÃ QUÉT CHẤT LƯỢNG CAO",
+                glow_subtitle: "Đã tự động tăng độ sáng tối đa để máy quét hoạt động dễ dàng nhất!",
+                close: "Đóng",
+                security_header: "Bảo mật thông tin riêng tư",
+                security_desc: "Vô hiệu hóa kéo hình ảnh, sao chép văn bản để bảo vệ tối đa dữ liệu cá nhân của Nguyễn Trí Thiện.",
+                version_label: "Phiên bản",
+                toast_right_click_blocked: "Bảo mật: Đã khóa menu chuột phải!",
+                toast_copy_blocked: "Bảo mật: Đã khóa sao chép nội dung!",
+                toast_drag_blocked: "Bảo mật: Đã chặn kéo thả hình ảnh!",
+                toast_qr_downloading: "Mã QR đang được tải xuống máy của bạn!",
+                toast_qr_tab_opened: "Đang mở mã QR ở tab mới!",
+                toast_share_success: "Đã chia sẻ liên kết thành công!",
+                toast_copy_success: "Đã sao chép liên kết vào bộ nhớ tạm!",
+                toast_copy_fail: "Không thể sao chép tự động!",
+                toast_copy_err: "Lỗi sao chép liên kết!",
+                theme_light: "Sáng",
+                theme_dark: "Tối",
+                sound_on: "Bật",
+                sound_off: "Tắt",
+                avatar_caption: "Ảnh Đại Diện - Nguyễn Trí Thiện",
+                cover_caption: "Ảnh Bìa Phong Cảnh - Nguyễn Trí Thiện"
+            },
+            en: {
+                tap_to_view_cover: "Tap to view cover photo",
+                customize_ui: "Customize Interface",
+                select_language: "Display Language",
+                ui_mode: "Theme Mode",
+                touch_sound: "Touch Sounds",
+                font_size: "Font Size",
+                font_style: "Font Family",
+                font_default: "Default",
+                font_sans: "Sans-Serif",
+                font_serif: "Serif",
+                font_mono: "Monospace",
+                security_notice: "Protected: Right-click, copy, and image dragging are disabled.",
+                honorary_member: "Honorary Member",
+                share_card: "Share business card with everyone",
+                personal_profile: "Personal Profile",
+                birthday: "Date of birth",
+                gender: "Gender",
+                gender_male: "Male",
+                ethnicity: "Ethnicity",
+                ethnicity_kinh: "Kinh",
+                country: "Country",
+                nation_vn: "🇻🇳 Vietnam",
+                address: "Address",
+                full_address: "9B Hamlet, Tan Thanh, An Giang",
+                phone_label: "Contact Phone Number",
+                call_now: "Call",
+                email_label: "Work Email",
+                send_email: "Email",
+                social_connect: "Social Connection",
+                visit: "Visit",
+                download_qr: "Download QR",
+                share_link: "Share Link",
+                zalo_subtitle: "Direct contact",
+                message: "Message",
+                this_card_qr_title: "Business Card QR Code",
+                this_card_qr_subtitle: "Scan to save info",
+                view_qr: "View QR",
+                qr_fb_title: "Facebook Personal Profile QR",
+                qr_zalo_title: "Zalo Account QR",
+                current_card_qr_desc: "Direct QR link to this digital card",
+                glow_title: "HIGH QUALITY SCAN QR",
+                glow_subtitle: "Screen brightness automatically maximized for effortless scanning!",
+                close: "Close",
+                security_header: "Privacy Security Protection",
+                security_desc: "Image dragging and text copying are disabled to protect Nguyen Tri Thien's personal data.",
+                version_label: "Version",
+                toast_right_click_blocked: "Security: Right-click menu is locked!",
+                toast_copy_blocked: "Security: Copying text is locked!",
+                toast_drag_blocked: "Security: Image dragging is blocked!",
+                toast_qr_downloading: "QR code is being downloaded to your device!",
+                toast_qr_tab_opened: "Opening QR code in a new tab!",
+                toast_share_success: "Link shared successfully!",
+                toast_copy_success: "Copied link to clipboard!",
+                toast_copy_fail: "Could not copy automatically!",
+                toast_copy_err: "Error copying link!",
+                theme_light: "Light",
+                theme_dark: "Dark",
+                sound_on: "On",
+                sound_off: "Off",
+                avatar_caption: "Avatar - Nguyen Tri Thien",
+                cover_caption: "Landscape Cover - Nguyen Tri Thien"
+            },
+            zh: {
+                tap_to_view_cover: "点击查看封面图",
+                customize_ui: "自定义界面",
+                select_language: "显示语言",
+                ui_mode: "界面模式",
+                touch_sound: "触 screen 声音",
+                font_size: "字体大小",
+                font_style: "字体样式",
+                font_default: "默认",
+                font_sans: "无衬线 (Sans)",
+                font_serif: "有衬线 (Serif)",
+                font_mono: "等宽 (Mono)",
+                security_notice: "已启用安全保护：禁止右键、禁止复制、禁止拖拽图片。",
+                honorary_member: "荣誉会员",
+                share_card: "分享名片给所有人",
+                personal_profile: "个人履历",
+                birthday: "出生日期",
+                gender: "性别",
+                gender_male: "男",
+                ethnicity: "民族",
+                ethnicity_kinh: "京族",
+                country: "国籍",
+                nation_vn: "🇻🇳 越南",
+                address: "联系地址",
+                full_address: "越南安江省新盛邑9B村",
+                phone_label: "联系电话号码",
+                call_now: "拨打电话",
+                email_label: "工作邮箱",
+                send_email: "发邮件",
+                social_connect: "社交平台连接",
+                visit: "访问",
+                download_qr: "下载二维码",
+                share_link: "分享链接",
+                zalo_subtitle: "直接联系",
+                message: "发消息",
+                this_card_qr_title: "个人名片二维码",
+                this_card_qr_subtitle: "扫码保存联系信息",
+                view_qr: "查看 QR",
+                qr_fb_title: "Facebook 个人名片二维码",
+                qr_zalo_title: "Zalo 账号二维码",
+                current_card_qr_desc: "直接指向此电子名片的二维码",
+                glow_title: "高质量扫码模式",
+                glow_subtitle: "已自动将屏幕亮度提升至最高，使扫码体验最流畅！",
+                close: "关闭",
+                security_header: "信息隐私安全保护",
+                security_desc: "已禁用拖放图像和复制文本，以最大限度保护 阮治善 (Nguyen Tri Thien) 的个人数据安全。",
+                version_label: "版本",
+                toast_right_click_blocked: "安全提示：右键菜单已锁定！",
+                toast_copy_blocked: "安全提示：复制功能已禁用！",
+                toast_drag_blocked: "安全提示：图像拖放已被阻止！",
+                toast_qr_downloading: "二维码正在下载到您的设备！",
+                toast_qr_tab_opened: "在新窗口打开二维码！",
+                toast_share_success: "链接分享成功！",
+                toast_copy_success: "链接已成功复制到剪贴板！",
+                toast_copy_fail: "无法自动复制！",
+                toast_copy_err: "复制链接出错！",
+                theme_light: "浅色",
+                theme_dark: "深色",
+                sound_on: "开启",
+                sound_off: "关闭",
+                avatar_caption: "头像 - 阮治善",
+                cover_caption: "风景封面图 - 阮治善"
+            }
+        };
+
+        let currentLang = "vi";
+
+        function updateLanguage(lang) {
+            currentLang = lang;
+            document.querySelectorAll("[data-lang-key]").forEach(el => {
+                const key = el.getAttribute("data-lang-key");
+                if (translations[lang] && translations[lang][key]) {
+                    el.innerText = translations[lang][key];
+                }
+            });
+            // Cập nhật giá trị phông chữ trong thẻ select nếu có
+            const themeTxt = document.getElementById('theme-text');
+            const isDark = document.documentElement.classList.contains('dark');
+            themeTxt.textContent = isDark ? translations[lang]['theme_dark'] : translations[lang]['theme_light'];
+
+            const soundTxt = document.getElementById('sound-text');
+            const isSoundOn = !document.getElementById('sound-icon-on').classList.contains('hidden');
+            soundTxt.textContent = isSoundOn ? translations[lang]['sound_on'] : translations[lang]['sound_off'];
+        }
+
+        // --- 2. HỆ THỐNG ÂM THANH CẢM ỨNG CHÂN THẬT (Web Audio API) ---
+        let touchSoundEnabled = true;
+        let audioCtx = null;
+
+        function playTapSound() {
+            if (!touchSoundEnabled) return;
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                // Tạo âm thanh nhấn cơ học haptic thanh thoát, tinh tế
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1500, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.08);
+
+                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.08);
+            } catch (e) {
+                console.log("Audio API not supported/interrupted:", e);
+            }
+        }
+
+        // Kích hoạt âm thanh trên tất cả hành động bấm
+        document.addEventListener('click', (e) => {
+            // Chỉ phát âm khi bấm vào nút, đường link, hoặc đối tượng tương tác được
+            if (e.target.closest('button') || e.target.closest('a') || e.target.closest('select') || e.target.closest('.cursor-pointer')) {
+                playTapSound();
+            }
+        });
+
+        // --- 3. HIỆU ỨNG PARALLAX 3D (CHỈNH SỬA CHIỀU SÂU TUYỆT ĐỐI) ---
+        const coverContainer = document.getElementById('cover-container');
+        const coverImg = document.getElementById('cover-img');
+
+        // Phản hồi di chuyển chuột trên Máy tính (PC/Laptop)
+        coverContainer.addEventListener('mousemove', (e) => {
+            const rect = coverContainer.getBoundingClientRect();
+            const x = e.clientX - rect.left - (rect.width / 2);
+            const y = e.clientY - rect.top - (rect.height / 2);
+            
+            // Xoay góc ảnh bìa tạo cảm giác 3D
+            const rotateX = -(y / rect.height) * 15; 
+            const rotateY = (x / rect.width) * 15;
+            const transX = (x / rect.width) * 12;
+            const transY = (y / rect.height) * 12;
+
+            coverImg.style.transform = `scale(1.15) translate(${transX}px, ${transY}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+        });
+
+        coverContainer.addEventListener('mouseleave', () => {
+            // Quay về trạng thái phẳng ban đầu nhẹ nhàng
+            coverImg.style.transform = 'scale(1.15) translate(0px, 0px) rotateX(0deg) rotateY(0deg)';
+        });
+
+        // Thiết bị di động: Parallax bằng Gyroscope cảm biến con quay hồi chuyển
+        if (window.DeviceOrientationEvent) {
+            // Yêu cầu quyền truy cập gia tốc kế đối với một số dòng máy iOS
+            window.addEventListener('deviceorientation', (e) => {
+                const beta = e.beta;   // Nghiêng trước/sau [-180, 180]
+                const gamma = e.gamma; // Nghiêng trái/phải [-90, 90]
+
+                if (beta !== null && gamma !== null) {
+                    // Giới hạn vùng giá trị tự nhiên khi cầm máy
+                    const tiltX = Math.max(-30, Math.min(30, beta - 45)); 
+                    const tiltY = Math.max(-30, Math.min(30, gamma));
+
+                    const transX = (tiltY / 30) * 15;
+                    const transY = (tiltX / 30) * 15;
+
+                    coverImg.style.transform = `scale(1.15) translate(${transX}px, ${transY}px) rotateX(${-transY/2}deg) rotateY(${transX/2}deg)`;
+                }
+            }, true);
+        }
+
+        // --- 4. XEM ẢNH TOÀN MÀN HÌNH (LIGHTBOX) ---
+        const lightboxModal = document.getElementById('lightbox-modal');
+        const lightboxImg = document.getElementById('lightbox-img');
+        const lightboxCaption = document.getElementById('lightbox-caption');
+        const btnCloseLightbox = document.getElementById('btn-close-lightbox');
+        const avatarContainer = document.getElementById('avatar-container');
+        const avatarImg = document.getElementById('avatar-img');
+
+        function openLightbox(src, captionText) {
+            lightboxImg.src = src;
+            lightboxCaption.textContent = captionText;
+            lightboxModal.classList.remove('hidden');
+        }
+
+        function closeLightbox() {
+            lightboxModal.classList.add('hidden');
+            lightboxImg.style.transform = 'scale(1)';
+        }
+
+        avatarContainer.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openLightbox(avatarImg.src, translations[currentLang]['avatar_caption']);
+        });
+
+        coverContainer.addEventListener('click', (e) => {
+            // Không mở khi bấm vào nút cài đặt ở góc bìa
+            if (e.target.closest('#btn-settings')) return;
+            e.stopPropagation();
+            openLightbox(coverImg.src, translations[currentLang]['cover_caption']);
+        });
+
+        btnCloseLightbox.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeLightbox();
+        });
+
+        lightboxModal.addEventListener('click', () => {
+            closeLightbox();
+        });
+
+        // --- 5. TỰ ĐỘNG BẬT SÁNG MÀN HÌNH CHẤT LƯỢNG CAO (GLOW MODE) ---
+        const qrGlowOverlay = document.getElementById('qr-glow-overlay');
+        const qrGlowImg = document.getElementById('qr-glow-img');
+        const btnCloseGlow = document.getElementById('btn-close-glow');
+        let wakeLock = null;
+
+        // Yêu cầu giữ màn hình sáng bằng Wake Lock API
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                }
+            } catch (err) {
+                console.log("WakeLock error:", err);
+            }
+        }
+
+        function releaseWakeLock() {
+            if (wakeLock !== null) {
+                wakeLock.release().then(() => {
+                    wakeLock = null;
+                });
+            }
+        }
+
+        // Ghi đè hàm toggleQR cũ để kích hoạt tính năng siêu sáng thông minh
+        function toggleQR(id) {
+            const targetQRImg = document.querySelector(`#${id} img`);
+            if (targetQRImg) {
+                // Hiển thị giao diện tăng tương phản độ sáng trắng
+                qrGlowImg.src = targetQRImg.src;
+                qrGlowOverlay.classList.remove('hidden');
+                // Gọi API giữ sáng màn hình
+                requestWakeLock();
+            }
+        }
+        window.toggleQR = toggleQR;
+
+        btnCloseGlow.addEventListener('click', (e) => {
+            e.stopPropagation();
+            qrGlowOverlay.classList.add('hidden');
+            releaseWakeLock();
+        });
+
         // Hiển thị hộp thông báo toast bảo mật/thành công mượt mà
         function showToast(message, type = "success") {
             const toast = document.getElementById('toast-message');
@@ -390,20 +848,20 @@
         // CHẶN CHUỘT PHẢI, SAO CHÉP VÀ KÉO THẢ HÌNH ẢNH
         document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
-            showToast("Bảo mật: Đã khóa menu chuột phải!", "warning");
+            showToast(translations[currentLang]['toast_right_click_blocked'], "warning");
             return false;
         });
 
         document.addEventListener('copy', function(e) {
             e.preventDefault();
-            showToast("Bảo mật: Đã khóa sao chép nội dung!", "warning");
+            showToast(translations[currentLang]['toast_copy_blocked'], "warning");
             return false;
         });
 
         document.addEventListener('dragstart', function(e) {
             if (e.target.tagName === 'IMG') {
                 e.preventDefault();
-                showToast("Bảo mật: Đã chặn kéo thả hình ảnh!", "warning");
+                showToast(translations[currentLang]['toast_drag_blocked'], "warning");
                 return false;
             }
         });
@@ -422,6 +880,13 @@
             settingsPanel.classList.add('hidden');
         });
 
+        // Đóng panel cài đặt khi bấm ra ngoài vùng panel
+        document.addEventListener('click', (e) => {
+            if (!settingsPanel.classList.contains('hidden') && !settingsPanel.contains(e.target) && e.target !== btnSettings && !btnSettings.contains(e.target)) {
+                settingsPanel.classList.add('hidden');
+            }
+        });
+
         const btnToggleTheme = document.getElementById('btn-toggle-theme');
         const themeIconLight = document.getElementById('theme-icon-light');
         const themeIconDark = document.getElementById('theme-icon-dark');
@@ -433,19 +898,40 @@
             if (isDark) {
                 themeIconLight.classList.add('hidden');
                 themeIconDark.classList.remove('hidden');
-                themeText.textContent = "Tối";
+                themeText.textContent = translations[currentLang]['theme_dark'];
             } else {
                 themeIconLight.classList.remove('hidden');
                 themeIconDark.classList.add('hidden');
-                themeText.textContent = "Sáng";
+                themeText.textContent = translations[currentLang]['theme_light'];
+            }
+        });
+
+        // Âm thanh bật / tắt
+        const btnToggleSound = document.getElementById('btn-toggle-sound');
+        const soundIconOn = document.getElementById('sound-icon-on');
+        const soundIconOff = document.getElementById('sound-icon-off');
+        const soundText = document.getElementById('sound-text');
+
+        btnToggleSound.addEventListener('click', (e) => {
+            e.stopPropagation();
+            touchSoundEnabled = !touchSoundEnabled;
+            if (touchSoundEnabled) {
+                soundIconOn.classList.remove('hidden');
+                soundIconOff.classList.add('hidden');
+                soundText.textContent = translations[currentLang]['sound_on'];
+                playTapSound();
+            } else {
+                soundIconOn.classList.add('hidden');
+                soundIconOff.classList.remove('hidden');
+                soundText.textContent = translations[currentLang]['sound_off'];
             }
         });
 
         // Co giãn phông chữ toàn bộ trang đồng bộ bằng REM gốc
         const fontSizes = [
-            { label: 'Nhỏ (A-)', size: '13.5px' },
+            { label: 'A-', size: '13.5px' },
             { label: 'Mặc định', size: '16px' },
-            { label: 'Lớn (A+)', size: '18.5px' }
+            { label: 'A+', size: '18.5px' }
         ];
         let currentSizeIndex = 1;
 
@@ -456,7 +942,7 @@
         function updateFontSize() {
             const selectedSize = fontSizes[currentSizeIndex];
             document.documentElement.style.fontSize = selectedSize.size;
-            fontLabel.textContent = selectedSize.label;
+            fontLabel.textContent = currentSizeIndex === 1 ? translations[currentLang]['font_default'] : selectedSize.label;
             fontDownBtn.disabled = currentSizeIndex === 0;
             fontUpBtn.disabled = currentSizeIndex === fontSizes.length - 1;
             fontDownBtn.style.opacity = currentSizeIndex === 0 ? "0.4" : "1";
@@ -488,6 +974,13 @@
             document.body.classList.add(selectedFont);
         });
 
+        // Bộ chọn ngôn ngữ
+        const languageSelect = document.getElementById('language-select');
+        languageSelect.addEventListener('change', (e) => {
+            updateLanguage(e.target.value);
+            updateFontSize();
+        });
+
         // --- ĐIỀU KHIỂN QR & CHIA SẺ ---
         const currentCardUrl = window.location.href;
 
@@ -517,13 +1010,6 @@
             shareLink(currentCardUrl);
         });
 
-        function toggleQR(id) {
-            const qrPanel = document.getElementById(id);
-            qrPanel.classList.toggle('hidden');
-        }
-
-        window.toggleQR = toggleQR;
-
         function downloadQR(imgUrl, fileName) {
             fetch(imgUrl)
                 .then(response => response.blob())
@@ -536,11 +1022,11 @@
                     link.click();
                     document.body.removeChild(link);
                     URL.revokeObjectURL(blobUrl);
-                    showToast("Mã QR đang được tải xuống máy của bạn!");
+                    showToast(translations[currentLang]['toast_qr_downloading']);
                 })
                 .catch(() => {
                     window.open(imgUrl, '_blank');
-                    showToast("Đang mở mã QR ở tab mới!");
+                    showToast(translations[currentLang]['toast_qr_tab_opened']);
                 });
         }
 
@@ -553,7 +1039,7 @@
                     text: 'Xem danh thiếp điện tử thông minh và kết nối với tôi!',
                     url: url
                 }).then(() => {
-                    showToast("Đã chia sẻ liên kết thành công!");
+                    showToast(translations[currentLang]['toast_share_success']);
                 }).catch((err) => {
                     if (err.name !== 'AbortError') {
                         fallbackCopy(url);
@@ -576,19 +1062,20 @@
             try {
                 const successful = document.execCommand('copy');
                 if (successful) {
-                    showToast("Đã sao chép liên kết vào bộ nhớ tạm!");
+                    showToast(translations[currentLang]['toast_copy_success']);
                 } else {
-                    showToast("Không thể sao chép tự động!");
+                    showToast(translations[currentLang]['toast_copy_fail']);
                 }
             } catch (err) {
-                showToast("Lỗi sao chép liên kết!");
+                showToast(translations[currentLang]['toast_copy_err']);
             }
             document.body.removeChild(textArea);
         }
         
-        // Khởi tạo icons của Lucide khi tải trang
+        // Khởi tạo mặc định
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
+            updateLanguage('vi'); // Mặc định Tiếng Việt
         });
     </script>
 </body>
