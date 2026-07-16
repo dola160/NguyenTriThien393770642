@@ -13,6 +13,9 @@
     </script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Thư viện nhận diện khuôn mặt Tracking.js siêu nhẹ cho AI Chống nhìn trộm thực tế -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/tracking-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/data/face-min.js"></script>
     <style>
         /* Khóa lựa chọn văn bản và nhấn giữ trên toàn bộ trang để bảo vệ quyền riêng tư */
         * {
@@ -37,12 +40,21 @@
             transform-style: preserve-3d;
         }
 
+        /* Lớp phủ chống nhìn trộm phân cực Radial Gradient */
+        .privacy-filter-active {
+            background: radial-gradient(circle at 50% 30%, transparent 15%, rgba(15, 23, 42, 0.98) 55%) !important;
+            backdrop-filter: blur(20px);
+        }
+
         @media print {
             body { display: none !important; }
         }
     </style>
 </head>
 <body class="font-sans-custom bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300 min-h-full flex flex-col items-center justify-start p-0 m-0 overflow-x-hidden">
+
+    <!-- CAMERA ẨN HOÀN TOÀN DÙNG CHO CHỐNG NHÌN TRỘM AI (KHÔNG HIỂN THỊ TRÊN MÀN HÌNH) -->
+    <video id="peep-video" width="320" height="240" autoplay loop muted playsinline class="absolute opacity-0 pointer-events-none -z-50 w-1 h-1 overflow-hidden"></video>
 
     <!-- CONTAINER CHÍNH -->
     <div id="main-card" class="w-full max-w-md bg-white dark:bg-slate-900 min-h-screen shadow-2xl relative flex flex-col justify-between overflow-hidden">
@@ -76,7 +88,7 @@
         </div>
 
         <!-- KHU VỰC BẢNG CÀI ĐẶT -->
-        <div id="settings-panel" class="hidden absolute top-16 left-3 right-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-4 rounded-2xl shadow-xl z-40 border border-slate-200 dark:border-slate-800 transition-all duration-300">
+        <div id="settings-panel" class="hidden absolute top-16 left-3 right-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-4 rounded-2xl shadow-xl z-40 border border-slate-200 dark:border-slate-800 transition-all duration-300 max-h-[80vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-200 dark:border-slate-800">
                 <h3 class="font-bold text-sm uppercase tracking-wider flex items-center gap-2 text-slate-800 dark:text-white">
                     <i data-lucide="settings" class="w-4 h-4"></i> <span data-lang-key="customize_ui">Tùy Chỉnh Giao Diện</span>
@@ -116,7 +128,23 @@
                 </button>
             </div>
 
-            <!-- 4. Kích thước chữ -->
+            <!-- 4. MÀN HÌNH CHỐNG NHÌN TRỘM (AI PREMIUM - MẶC ĐỊNH TẮT) -->
+            <div class="flex items-center justify-between py-2 border-t border-slate-100 dark:border-slate-800 text-slate-800 dark:text-slate-200 bg-teal-500/5 dark:bg-teal-500/10 p-2 rounded-xl border border-teal-500/20">
+                <div class="flex flex-col gap-0.5">
+                    <span class="text-xs font-black text-teal-600 dark:text-teal-400 flex items-center gap-1">
+                        <i data-lucide="eye-off" class="w-3.5 h-3.5"></i>
+                        <span data-lang-key="anti_peep_title">Chống nhìn trộm (AI)</span>
+                    </span>
+                    <span class="text-[9px] text-slate-400 dark:text-slate-500 font-semibold" data-lang-key="anti_peep_subtitle">Tự động khóa khi bị nhìn lén</span>
+                </div>
+                <button id="btn-toggle-peep" class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-bold transition-all active:scale-95 text-slate-500">
+                    <i data-lucide="shield-alert" id="peep-icon-off" class="w-4 h-4 text-slate-400"></i>
+                    <i data-lucide="shield-check" id="peep-icon-on" class="w-4 h-4 text-teal-500 hidden animate-pulse"></i>
+                    <span id="peep-text" data-lang-key="peep_off">Tắt</span>
+                </button>
+            </div>
+
+            <!-- 5. Kích thước chữ -->
             <div class="flex items-center justify-between py-2 border-t border-slate-100 dark:border-slate-800 text-slate-800 dark:text-slate-200">
                 <span class="text-xs font-semibold" data-lang-key="font_size">Kích thước chữ</span>
                 <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
@@ -126,7 +154,7 @@
                 </div>
             </div>
 
-            <!-- 5. Kiểu phông chữ hiển thị -->
+            <!-- 6. Kiểu phông chữ hiển thị -->
             <div class="flex items-center justify-between py-2 border-t border-slate-100 dark:border-slate-800 text-slate-800 dark:text-slate-200">
                 <span class="text-xs font-semibold" data-lang-key="font_style">Kiểu phông chữ</span>
                 <select id="font-family-select" class="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-xs font-semibold border border-slate-200 dark:border-slate-700 focus:outline-none">
@@ -136,7 +164,7 @@
                 </select>
             </div>
 
-            <!-- 6. Chi tiết bảo mật tĩnh -->
+            <!-- 7. Chi tiết bảo mật tĩnh -->
             <div class="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] text-emerald-600 dark:text-emerald-400 flex flex-col gap-1">
                 <div class="flex items-center gap-1 font-semibold">
                     <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
@@ -399,6 +427,19 @@
             <p id="lightbox-caption" class="text-white/80 text-sm font-bold mt-4 tracking-wide text-center px-4"></p>
         </div>
 
+        <!-- LỚP PHỦ CHỐNG NHÌN TRỘM AI HOẠT ĐỘNG THỜI GIAN THỰC -->
+        <div id="privacy-shield-overlay" class="hidden fixed inset-0 z-[18000] flex flex-col items-center justify-center p-6 transition-all duration-300 privacy-filter-active">
+            <!-- Biểu tượng cảnh báo nhấp nháy -->
+            <div class="w-20 h-20 bg-rose-600 text-white rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(225,29,72,0.6)] animate-bounce mb-6">
+                <i data-lucide="eye-off" class="w-10 h-10"></i>
+            </div>
+            <div class="text-white font-black text-center mb-2 text-xl tracking-wider uppercase animate-pulse" data-lang-key="peeping_alert">CẢNH BÁO: PHÁT HIỆN NHÌN TRỘM!</div>
+            <p class="text-slate-300 font-bold text-xs text-center max-w-xs leading-relaxed" data-lang-key="peeping_desc">Hệ thống AI đã làm mờ màn hình để bảo mật thông tin lý lịch cá nhân của Nguyễn Trí Thiện khỏi các ánh nhìn nghiêng góc.</p>
+            <div class="mt-6 flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-full border border-white/10 text-[10px] text-teal-400 font-black tracking-widest uppercase">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> <span data-lang-key="ai_sec_active">Lá chắn AI đang hoạt động</span>
+            </div>
+        </div>
+
         <!-- LỚP PHỦ FULL SÁNG ĐỂ QUÉT QR (SCREEN GLOW EFFECT) -->
         <div id="qr-glow-overlay" class="hidden fixed inset-0 bg-white z-[15000] flex flex-col items-center justify-center p-6 transition-all duration-300">
             <div class="text-slate-900 font-black text-center mb-6 text-lg tracking-tight uppercase" data-lang-key="glow_title">MÃ QUÉT CHẤT LƯỢNG CAO</div>
@@ -427,7 +468,7 @@
             </p>
             <!-- HIỂN THỊ PHIÊN BẢN ĐÚNG THEO YÊU CẦU -->
             <p class="text-[9px] text-slate-300 dark:text-slate-600 font-bold tracking-widest mt-3 uppercase">
-                <span data-lang-key="version_label">Phiên bản</span> v3.5.0 (Pro Premium)
+                <span data-lang-key="version_label">Phiên bản</span> v3.6.0 (Pro Premium AI)
             </p>
         </div>
     </div>
@@ -497,7 +538,17 @@
                 sound_on: "Bật",
                 sound_off: "Tắt",
                 avatar_caption: "Ảnh Đại Diện - Nguyễn Trí Thiện",
-                cover_caption: "Ảnh Bìa Phong Cảnh - Nguyễn Trí Thiện"
+                cover_caption: "Ảnh Bìa Phong Cảnh - Nguyễn Trí Thiện",
+                anti_peep_title: "Chống nhìn trộm (AI)",
+                anti_peep_subtitle: "Tự động khóa khi bị nhìn lén",
+                peep_on: "Bật",
+                peep_off: "Tắt",
+                peep_active_toast: "Đã kích hoạt Chống nhìn trộm AI ngầm!",
+                peep_inactive_toast: "Đã tắt chế độ Chống nhìn trộm.",
+                peep_cam_denied: "Không thể kích hoạt: Chưa được cấp quyền Camera!",
+                peeping_alert: "PHÁT HIỆN NHÌN TRỘM!",
+                peeping_desc: "Hệ thống AI đã làm mờ màn hình để bảo mật thông tin lý lịch cá nhân của Nguyễn Trí Thiện khỏi các ánh nhìn nghiêng góc.",
+                ai_sec_active: "Lá chắn AI đang hoạt động"
             },
             en: {
                 tap_to_view_cover: "Tap to view cover photo",
@@ -560,7 +611,17 @@
                 sound_on: "On",
                 sound_off: "Off",
                 avatar_caption: "Avatar - Nguyen Tri Thien",
-                cover_caption: "Landscape Cover - Nguyen Tri Thien"
+                cover_caption: "Landscape Cover - Nguyen Tri Thien",
+                anti_peep_title: "AI Anti-Peep Shield",
+                anti_peep_subtitle: "Locks screen if someone peeps",
+                peep_on: "On",
+                peep_off: "Off",
+                peep_active_toast: "AI Anti-peep shield active in background!",
+                peep_inactive_toast: "Anti-peep shield deactivated.",
+                peep_cam_denied: "Unable to activate: Camera permission denied!",
+                peeping_alert: "PEEPING DETECTED!",
+                peeping_desc: "The AI system has blurred the screen to secure Nguyen Tri Thien's private profile information from side angles.",
+                ai_sec_active: "AI Security Shield Active"
             },
             zh: {
                 tap_to_view_cover: "点击查看封面图",
@@ -623,7 +684,17 @@
                 sound_on: "开启",
                 sound_off: "关闭",
                 avatar_caption: "头像 - 阮治善",
-                cover_caption: "风景封面图 - 阮治善"
+                cover_caption: "风景封面图 - 阮治善",
+                anti_peep_title: "AI 防窥保护",
+                anti_peep_subtitle: "检测到他人窥视时自动锁定",
+                peep_on: "开启",
+                peep_off: "关闭",
+                peep_active_toast: "AI防窥功能已在后台激活！",
+                peep_inactive_toast: "防窥盾牌已关闭。",
+                peep_cam_denied: "激活失败：未获得相机访问权限！",
+                peeping_alert: "发现他人窥屏！",
+                peeping_desc: "AI智能防窥系统已自动将页面高强度模糊化，防止 阮治善 的私密信息从侧角泄露。",
+                ai_sec_active: "AI防窥盾牌运行中"
             }
         };
 
@@ -637,7 +708,8 @@
                     el.innerText = translations[lang][key];
                 }
             });
-            // Cập nhật trạng thái hiển thị trong nút cài đặt
+            
+            // Cập nhật các trạng thái hiển thị động
             const themeTxt = document.getElementById('theme-text');
             const isDark = document.documentElement.classList.contains('dark');
             themeTxt.textContent = isDark ? translations[lang]['theme_dark'] : translations[lang]['theme_light'];
@@ -645,6 +717,10 @@
             const soundTxt = document.getElementById('sound-text');
             const isSoundOn = !document.getElementById('sound-icon-on').classList.contains('hidden');
             soundTxt.textContent = isSoundOn ? translations[lang]['sound_on'] : translations[lang]['sound_off'];
+
+            const peepTxt = document.getElementById('peep-text');
+            const isPeepOn = !document.getElementById('peep-icon-on').classList.contains('hidden');
+            peepTxt.textContent = isPeepOn ? translations[lang]['peep_on'] : translations[lang]['peep_off'];
         }
 
         // --- 2. HỆ THỐNG ÂM THANH CẢM ỨNG (Web Audio API) ---
@@ -686,11 +762,10 @@
             }
         });
 
-        // --- 3. HIỆU ỨNG PARALLAX 3D (ĐÃ KHẮC PHỤC LỖI LỆCH KHUNG ẢNH BÌA) ---
+        // --- 3. HIỆU ỨNG PARALLAX 3D CHỐNG LỆCH KHUNG ẢNH BÌA ---
         const coverContainer = document.getElementById('cover-container');
         const coverImg = document.getElementById('cover-img');
 
-        // Phản hồi di chuyển chuột trên Máy tính (PC/Laptop)
         coverContainer.addEventListener('mousemove', (e) => {
             const rect = coverContainer.getBoundingClientRect();
             const x = e.clientX - rect.left - (rect.width / 2);
@@ -701,20 +776,17 @@
             const transX = (x / rect.width) * 15;
             const transY = (y / rect.height) * 15;
 
-            // Di chuyển Parallax tương đối so với vị trí gốc ở giữa (left-1/2 top-1/2) để loại bỏ hoàn toàn viền xám
             coverImg.style.transform = `translate(calc(-50% + ${transX}px), calc(-50% + ${transY}px)) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
         });
 
         coverContainer.addEventListener('mouseleave', () => {
-            // Quay về tâm điểm an toàn nhẹ nhàng
             coverImg.style.transform = 'translate(-50%, -50%) rotateX(0deg) rotateY(0deg)';
         });
 
-        // Thiết bị di động: Sử dụng cảm biến gia tốc kế (Gyroscope)
         if (window.DeviceOrientationEvent) {
             window.addEventListener('deviceorientation', (e) => {
-                const beta = e.beta;   // Nghiêng trước/sau [-180, 180]
-                const gamma = e.gamma; // Nghiêng trái/phải [-90, 90]
+                const beta = e.beta;
+                const gamma = e.gamma;
 
                 if (beta !== null && gamma !== null) {
                     const tiltX = Math.max(-30, Math.min(30, beta - 45)); 
@@ -767,7 +839,108 @@
             closeLightbox();
         });
 
-        // --- 5. TỰ ĐỘNG GIỮ SÁNG MÀN HÌNH CHẤT LƯỢNG CAO ---
+        // --- 5. TÍNH NĂNG MÀN HÌNH CHỐNG NHÌN TRỘM AI HOẠT ĐỘNG THỰC TẾ ---
+        let peepActive = false;
+        let peepStream = null;
+        let trackingInstance = null;
+        
+        const videoEl = document.getElementById('peep-video');
+        const btnTogglePeep = document.getElementById('btn-toggle-peep');
+        const peepIconOn = document.getElementById('peep-icon-on');
+        const peepIconOff = document.getElementById('peep-icon-off');
+        const peepText = document.getElementById('peep-text');
+        const privacyShield = document.getElementById('privacy-shield-overlay');
+
+        async function startAntiPeepAI() {
+            try {
+                // Tự động yêu cầu quyền truy cập Camera trước của thiết bị
+                peepStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: "user",
+                        width: { ideal: 320 },
+                        height: { ideal: 240 }
+                    },
+                    audio: false
+                });
+                
+                videoEl.srcObject = peepStream;
+                videoEl.play();
+
+                // Khởi tạo Tracker AI nhận diện khuôn mặt
+                const tracker = new tracking.ObjectTracker('face');
+                tracker.setInitialScale(4);
+                tracker.setStepSize(2);
+                tracker.setEdgesDensity(0.1);
+
+                // Lắng nghe sự kiện bắt tọa độ khuôn mặt từ Camera
+                tracker.on('track', function(event) {
+                    if (!peepActive) return;
+
+                    // Nếu phát hiện có từ 2 khuôn mặt trở lên (hoặc người lạ nhìn từ phía sau)
+                    if (event.data.length >= 2) {
+                        privacyShield.classList.remove('hidden');
+                    } else if (event.data.length === 1) {
+                        // Phân tích góc nhìn nghiêng: Nếu khuôn mặt chính lệch mép khung hình quá nhiều (tức người dùng đang cầm điện thoại xiên hoặc có người ghé sát)
+                        const face = event.data[0];
+                        const centerOfFrame = 160; // 320 / 2
+                        const faceCenter = face.x + (face.width / 2);
+                        
+                        // Độ lệch tâm khuôn mặt lớn hơn 60px chứng minh góc nhìn bất thường
+                        if (Math.abs(faceCenter - centerOfFrame) > 75) {
+                            privacyShield.classList.remove('hidden');
+                        } else {
+                            privacyShield.classList.add('hidden');
+                        }
+                    } else {
+                        // Không có ai nhìn trực diện
+                        privacyShield.classList.add('hidden');
+                    }
+                });
+
+                trackingInstance = tracking.track('#peep-video', tracker);
+                peepActive = true;
+                
+                peepIconOn.classList.remove('hidden');
+                peepIconOff.classList.add('hidden');
+                peepText.textContent = translations[currentLang]['peep_on'];
+                showToast(translations[currentLang]['peep_active_toast']);
+            } catch (err) {
+                console.error("Camera access failed: ", err);
+                showToast(translations[currentLang]['peep_cam_denied'], "warning");
+                stopAntiPeepAI();
+            }
+        }
+
+        function stopAntiPeepAI() {
+            peepActive = false;
+            privacyShield.classList.add('hidden');
+            
+            if (trackingInstance) {
+                trackingInstance.stop();
+                trackingInstance = null;
+            }
+            if (peepStream) {
+                peepStream.getTracks().forEach(track => track.stop());
+                peepStream = null;
+            }
+            videoEl.srcObject = null;
+
+            peepIconOn.classList.add('hidden');
+            peepIconOff.classList.remove('hidden');
+            peepText.textContent = translations[currentLang]['peep_off'];
+        }
+
+        btnTogglePeep.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!peepActive) {
+                startAntiPeepAI();
+            } else {
+                stopAntiPeepAI();
+                showToast(translations[currentLang]['peep_inactive_toast']);
+            }
+        });
+
+        // --- 6. TỰ ĐỘNG GIỮ SÁNG MÀN HÌNH CHẤT LƯỢNG CAO ---
         const qrGlowOverlay = document.getElementById('qr-glow-overlay');
         const qrGlowImg = document.getElementById('qr-glow-img');
         const btnCloseGlow = document.getElementById('btn-close-glow');
