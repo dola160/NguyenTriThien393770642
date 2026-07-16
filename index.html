@@ -13,9 +13,6 @@
     </script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Thư viện nhận diện khuôn mặt Tracking.js siêu nhẹ cho AI Chống nhìn trộm thực tế -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/tracking-min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/data/face-min.js"></script>
     <style>
         /* Khóa lựa chọn văn bản và nhấn giữ trên toàn bộ trang để bảo vệ quyền riêng tư */
         * {
@@ -42,8 +39,8 @@
 
         /* Lớp phủ chống nhìn trộm phân cực Radial Gradient */
         .privacy-filter-active {
-            background: radial-gradient(circle at 50% 30%, transparent 15%, rgba(15, 23, 42, 0.98) 55%) !important;
-            backdrop-filter: blur(20px);
+            background: radial-gradient(circle at 50% 30%, transparent 12%, rgba(15, 23, 42, 0.99) 45%) !important;
+            backdrop-filter: blur(25px);
         }
 
         @media print {
@@ -53,15 +50,14 @@
 </head>
 <body class="font-sans-custom bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300 min-h-full flex flex-col items-center justify-start p-0 m-0 overflow-x-hidden">
 
-    <!-- CAMERA ẨN HOÀN TOÀN DÙNG CHO CHỐNG NHÌN TRỘM AI (KHÔNG HIỂN THỊ TRÊN MÀN HÌNH) -->
-    <video id="peep-video" width="320" height="240" autoplay loop muted playsinline class="absolute opacity-0 pointer-events-none -z-50 w-1 h-1 overflow-hidden"></video>
+    <!-- CAMERA ĐƯỢC ẨN BẰNG CÁCH ĐẨY RA KHỎI PHẠM VI MÀN HÌNH (ĐẢM BẢO TRÌNH DUYỆT KHÔNG TỰ KHÓA LUỒNG VIDEO) -->
+    <video id="peep-video" width="320" height="240" autoplay loop muted playsinline class="fixed left-[-9999px] top-[-9999px] pointer-events-none z-[-50]"></video>
 
     <!-- CONTAINER CHÍNH -->
     <div id="main-card" class="w-full max-w-md bg-white dark:bg-slate-900 min-h-screen shadow-2xl relative flex flex-col justify-between overflow-hidden">
         
         <!-- PHẦN ĐẦU: ẢNH BÌA PARALLAX & NÚT CÀI ĐẶT -->
         <div class="relative h-48 w-full bg-slate-200 dark:bg-slate-800 overflow-hidden shrink-0 parallax-container cursor-pointer" id="cover-container">
-            <!-- Đã sửa lỗi căn lề bằng cách dùng left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 kết hợp phủ ảnh rộng hơn (125%) -->
             <img 
                 id="cover-img"
                 src="https://cdnv2.tgdd.vn/mwg-static/common/News/1586975/hinh-nen-may-tinh-cute-de-thuong%20%2827%29.jpg" 
@@ -135,7 +131,7 @@
                         <i data-lucide="eye-off" class="w-3.5 h-3.5"></i>
                         <span data-lang-key="anti_peep_title">Chống nhìn trộm (AI)</span>
                     </span>
-                    <span class="text-[9px] text-slate-400 dark:text-slate-500 font-semibold" data-lang-key="anti_peep_subtitle">Tự động khóa khi bị nhìn lén</span>
+                    <span id="ai-status-text" class="text-[9px] text-slate-400 dark:text-slate-500 font-semibold" data-lang-key="anti_peep_subtitle">Tự động khóa khi bị nhìn lén</span>
                 </div>
                 <button id="btn-toggle-peep" class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-bold transition-all active:scale-95 text-slate-500">
                     <i data-lucide="shield-alert" id="peep-icon-off" class="w-4 h-4 text-slate-400"></i>
@@ -468,7 +464,7 @@
             </p>
             <!-- HIỂN THỊ PHIÊN BẢN ĐÚNG THEO YÊU CẦU -->
             <p class="text-[9px] text-slate-300 dark:text-slate-600 font-bold tracking-widest mt-3 uppercase">
-                <span data-lang-key="version_label">Phiên bản</span> v3.6.0 (Pro Premium AI)
+                <span data-lang-key="version_label">Phiên bản</span> v3.7.0 (Pro Premium AI)
             </p>
         </div>
     </div>
@@ -673,7 +669,7 @@
                 toast_right_click_blocked: "安全提示：右键菜单已锁定！",
                 toast_copy_blocked: "安全提示：复制功能已禁用！",
                 toast_drag_blocked: "安全提示：图像拖放已被阻止！",
-                toast_qr_downloading: "二维码正在下载到您的设备！",
+                toast_qr_downloading: "二维码正在下载 to 您的设备！",
                 toast_qr_tab_opened: "在新窗口打开二维码！",
                 toast_share_success: "链接分享成功！",
                 toast_copy_success: "链接已成功复制到剪贴板！",
@@ -752,7 +748,7 @@
                 osc.start();
                 osc.stop(audioCtx.currentTime + 0.08);
             } catch (e) {
-                console.log("Audio API not supported/interrupted:", e);
+                console.log("Audio API not supported:", e);
             }
         }
 
@@ -843,6 +839,7 @@
         let peepActive = false;
         let peepStream = null;
         let trackingInstance = null;
+        let scriptsLoaded = false;
         
         const videoEl = document.getElementById('peep-video');
         const btnTogglePeep = document.getElementById('btn-toggle-peep');
@@ -850,49 +847,90 @@
         const peepIconOff = document.getElementById('peep-icon-off');
         const peepText = document.getElementById('peep-text');
         const privacyShield = document.getElementById('privacy-shield-overlay');
+        const aiStatusText = document.getElementById('ai-status-text');
+
+        // Hàm tải tuần tự các script tracking và face model để không bị lỗi bất đồng bộ
+        function loadTrackingScripts() {
+            return new Promise((resolve, reject) => {
+                if (window.tracking) {
+                    resolve();
+                    return;
+                }
+                const trackingScript = document.createElement('script');
+                trackingScript.src = "https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/tracking-min.js";
+                trackingScript.async = true;
+                
+                trackingScript.onload = () => {
+                    const faceScript = document.createElement('script');
+                    faceScript.src = "https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/data/face-min.js";
+                    faceScript.async = true;
+                    faceScript.onload = () => {
+                        scriptsLoaded = true;
+                        resolve();
+                    };
+                    faceScript.onerror = () => reject(new Error("Lỗi tải tệp mô hình khuôn mặt Face.js"));
+                    document.head.appendChild(faceScript);
+                };
+                
+                trackingScript.onerror = () => reject(new Error("Lỗi tải tệp cốt lõi Tracking.js"));
+                document.head.appendChild(trackingScript);
+            });
+        }
 
         async function startAntiPeepAI() {
             try {
-                // Tự động yêu cầu quyền truy cập Camera trước của thiết bị
+                aiStatusText.textContent = currentLang === "vi" ? "Đang tải mô hình AI..." : (currentLang === "en" ? "Loading AI models..." : "正在加载AI模型...");
+                
+                // Đảm bảo các thư viện tracking đã được tải đầy đủ
+                if (!scriptsLoaded) {
+                    await loadTrackingScripts();
+                }
+
+                aiStatusText.textContent = currentLang === "vi" ? "Đang yêu cầu camera..." : (currentLang === "en" ? "Requesting camera..." : "正在请求相机...");
+
+                // Yêu cầu luồng camera trước một cách an toàn và tương thích tối đa với mọi thiết bị di động
                 peepStream = await navigator.mediaDevices.getUserMedia({
                     video: {
-                        facingMode: "user",
-                        width: { ideal: 320 },
-                        height: { ideal: 240 }
+                        facingMode: "user"
                     },
                     audio: false
                 });
                 
                 videoEl.srcObject = peepStream;
-                videoEl.play();
+                // Đảm bảo video được phát hành trình mượt mà
+                await videoEl.play();
 
-                // Khởi tạo Tracker AI nhận diện khuôn mặt
+                aiStatusText.textContent = currentLang === "vi" ? "AI đang bảo vệ bạn ngầm" : (currentLang === "en" ? "AI is protecting you" : "AI防窥护盾运行中");
+
+                // Khởi tạo Tracking Object
                 const tracker = new tracking.ObjectTracker('face');
-                tracker.setInitialScale(4);
+                tracker.setInitialScale(4.0);
                 tracker.setStepSize(2);
                 tracker.setEdgesDensity(0.1);
 
-                // Lắng nghe sự kiện bắt tọa độ khuôn mặt từ Camera
+                // Lắng nghe hành vi nhận diện
                 tracker.on('track', function(event) {
                     if (!peepActive) return;
 
-                    // Nếu phát hiện có từ 2 khuôn mặt trở lên (hoặc người lạ nhìn từ phía sau)
+                    // Nếu phát hiện có từ 2 khuôn mặt trở lên nhìn lén từ sau hoặc hai bên
                     if (event.data.length >= 2) {
                         privacyShield.classList.remove('hidden');
                     } else if (event.data.length === 1) {
-                        // Phân tích góc nhìn nghiêng: Nếu khuôn mặt chính lệch mép khung hình quá nhiều (tức người dùng đang cầm điện thoại xiên hoặc có người ghé sát)
+                        // Tính toán độ lệch tâm khuôn mặt trong khung hình camera trước để bắt góc nghiêng nhìn trộm
                         const face = event.data[0];
-                        const centerOfFrame = 160; // 320 / 2
+                        // Tỉ lệ kích thước khung hình mặc định của video tracking.js
+                        const videoWidth = videoEl.videoWidth || 320;
+                        const centerOfFrame = videoWidth / 2;
                         const faceCenter = face.x + (face.width / 2);
                         
-                        // Độ lệch tâm khuôn mặt lớn hơn 60px chứng minh góc nhìn bất thường
-                        if (Math.abs(faceCenter - centerOfFrame) > 75) {
+                        // Nếu khuôn mặt lệch tâm quá mạnh chứng tỏ người dùng đang cầm xéo máy hoặc có người lạ ép sát góc
+                        if (Math.abs(faceCenter - centerOfFrame) > (videoWidth * 0.23)) {
                             privacyShield.classList.remove('hidden');
                         } else {
                             privacyShield.classList.add('hidden');
                         }
                     } else {
-                        // Không có ai nhìn trực diện
+                        // Không có ai nằm trong tầm nhìn trực diện tối ưu của lá chắn
                         privacyShield.classList.add('hidden');
                     }
                 });
@@ -905,7 +943,7 @@
                 peepText.textContent = translations[currentLang]['peep_on'];
                 showToast(translations[currentLang]['peep_active_toast']);
             } catch (err) {
-                console.error("Camera access failed: ", err);
+                console.error("Anti-Peep activation failed:", err);
                 showToast(translations[currentLang]['peep_cam_denied'], "warning");
                 stopAntiPeepAI();
             }
@@ -914,6 +952,7 @@
         function stopAntiPeepAI() {
             peepActive = false;
             privacyShield.classList.add('hidden');
+            aiStatusText.textContent = translations[currentLang]['anti_peep_subtitle'];
             
             if (trackingInstance) {
                 trackingInstance.stop();
